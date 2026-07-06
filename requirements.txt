@@ -1,9 +1,5 @@
-numpy
-pandas
-pymc
-threadpoolctl
-pymc.sampling.mcmc
-arviz
-itertools
 streamlit
+pandas
+numpy
+pymc
 arviz
