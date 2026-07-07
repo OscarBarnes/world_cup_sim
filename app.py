@@ -125,12 +125,21 @@ st.markdown("Select any two international sides to run a 1,000-universe simulati
 
 # Pull the real team names from your model's posterior coordinates
 try:
-    # ArviZ/xarray stores coordinate values under .coords
+    # 1. Try to pull directly from the model's brain coordinates
     available_teams = sorted(list(trace.posterior.coords["team"].values))
 except (AttributeError, KeyError):
-    # Fallback: if your coordinate name was different (e.g., "teams"), 
-    # we can grab them from the shootout data or adjust this key
-    available_teams = sorted(list(shootouts_df["team"].unique()))
+    # 2. Fallback: If that fails, check the CSV columns dynamically
+    cols = shootouts_df.columns
+    
+    if "home_team" in cols and "away_team" in cols:
+        # If it's a match list, combine home and away teams to get every unique country
+        all_teams = pd.concat([shootouts_df["home_team"], shootouts_df["away_team"]]).unique()
+        available_teams = sorted(list(all_teams))
+    elif "team" in cols:
+        available_teams = sorted(list(shootouts_df["team"].unique()))
+    else:
+        # 3. Ultimate Emergency Fallback (so the page absolute never crashes)
+        available_teams = sorted(["Argentina", "Brazil", "England", "France", "Germany", "Netherlands", "Spain"])
 
 col1, col2 = st.columns(2)
 with col1:
