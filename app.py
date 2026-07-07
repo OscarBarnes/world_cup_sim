@@ -79,32 +79,98 @@ with st.expander("🧠 View the Hierarchical PyMC Model Architecture"):
 
 st.write("---")
 
+# =========================================================
+# HELPER FUNCTION: THE ENGINE
+# =========================================================
+def simulate_match(team_a, team_b, trace):
+    """
+    Extracts posterior parameters for both teams and draws 1,000 samples
+    from the Negative Binomial distribution to simulate a match.
+    """
+    # 1. Extract the posterior chains for our variables
+    # (Note: Replace "atts", "defs", "intercept" with your exact PyMC variable names!)
+    att_A = trace.posterior["atts"].sel(team=team_a).values.flatten()
+    def_A = trace.posterior["defs"].sel(team=team_a).values.flatten()
+    
+    att_B = trace.posterior["atts"].sel(team=team_b).values.flatten()
+    def_B = trace.posterior["defs"].sel(team=team_b).values.flatten()
+    
+    intercept = trace.posterior["intercept"].values.flatten()
+    alpha = trace.posterior["alpha"].values.flatten() # Your chaos/overdispersion parameter
+    
+    # 2. Subsample to exactly 1,000 universes to keep it fast
+    num_sims = 1000
+    idx = np.random.choice(len(att_A), size=num_sims, replace=False)
+    
+    # 3. Calculate expected goals (mu) for each universe
+    mu_A = np.exp(intercept[idx] + att_A[idx] - def_B[idx])
+    mu_B = np.exp(intercept[idx] + att_B[idx] - def_A[idx])
+    
+    # 4. Simulating the chaos using the Negative Binomial distribution
+    # Note: NumPy parameterizes Negative Binomial using (n, p). 
+    # We convert our mean (mu) and overdispersion (alpha) to NumPy's format:
+    p_A = alpha[idx] / (alpha[idx] + mu_A)
+    p_B = alpha[idx] / (alpha[idx] + mu_B)
+    
+    goals_A = np.random.negative_binomial(alpha[idx], p_A)
+    goals_B = np.random.negative_binomial(alpha[idx], p_B)
+    
+    return goals_A, goals_B
+
 # ---------------------------------------------------------
 # 4. INTERACTIVE ZONE: The Dream Matchup Engine
 # ---------------------------------------------------------
 st.header("🕹️ 3. Test the Multiverse Machine")
-st.markdown("Select any two international sides to run a 1,000-universe simulation of a neutral-ground clash.")
+st.markdown("Select any two international sides to run a 1,000-universe simulation.")
 
-# Mock list of teams extracted from your model trace
-# (Later we will replace this with actual unique team names from your dataset)
-available_teams = sorted(["England", "France", "Brazil", "Argentina", "DR Congo", "South Africa", "Mexico"])
+# Pull the real team names from your model's posterior coordinates
+try:
+    # ArviZ/xarray stores coordinate values under .coords
+    available_teams = sorted(list(trace.posterior.coords["team"].values))
+except AttributeError:
+    # Fallback: if your coordinate name was different (e.g., "teams"), 
+    # we can grab them from the shootout data or adjust this key
+    available_teams = sorted(list(shootouts_df["team"].unique()))
 
 col1, col2 = st.columns(2)
 with col1:
     team_a = st.selectbox("Select Team A", available_teams, index=0)
 with col2:
-    team_b = st.selectbox("Select Team B", available_teams, index=4)
+    team_b = st.selectbox("Select Team B", available_teams, index=1 if len(available_teams) > 1 else 0)
 
 # Slider for the Chaos Level
 chaos_factor = st.slider("Adjust Chaos Level (Overdispersion)", min_value=0.1, max_value=2.0, value=1.0)
 
+# The Simulation Trigger Button
 if st.button("🚀 Run Match Simulation"):
-    st.write(f"### Running 1,000 simulations: {team_a} vs {team_b}...")
     
-    # Placeholder for where your match simulation logic outputs its charts/heatmaps
-    st.info("Visual scoreline probability grid and win/loss/draw percentages will render here.")
-
-st.write("---")
+    # 1. Run the function we defined above
+    with st.spinner("Collapsing quantum probabilities..."):
+        goals_A, goals_B = simulate_match(team_a, team_b, trace)
+    
+    # 2. Math: Calculate outcomes across all 1,000 universes
+    wins_A = np.sum(goals_A > goals_B)
+    wins_B = np.sum(goals_B > goals_A)
+    draws = np.sum(goals_A == goals_B)
+    
+    pct_A = (wins_A / 1000) * 100
+    pct_B = (wins_B / 1000) * 100
+    pct_draw = (draws / 1000) * 100
+    
+    # 3. Display the Headline Results using clean visual columns
+    st.write(f"### 📊 Simulation Results: {team_a} vs {team_b}")
+    
+    m1, m2, m3 = st.columns(3)
+    m1.metric(label=f"🏆 {team_a} Win Probability", value=f"{pct_A:.1f}%")
+    m2.metric(label="🤝 Draw Probability", value=f"{pct_draw:.1f}%")
+    m3.metric(label=f"🏆 {team_b} Win Probability", value=f"{pct_B:.1f}%")
+    
+    # 4. Contextual summary for the dads
+    st.info(f"""
+    In 1,000 alternate realities, **{team_a}** won {wins_A} times, 
+    **{team_b}** won {wins_B} times, and the match ended in a draw {draws} times. 
+    The average expected scoreline across the multiverse was **{goals_A.mean():.1f} - {goals_B.mean():.1f}**.
+    """)
 
 # ---------------------------------------------------------
 # 5. PHASE 4: The Tournament Finale
