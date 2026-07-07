@@ -48,7 +48,7 @@ Recent matches matter exponentially more than older ones.
 
 # Technical Deep Dive for Dad #1 (Data Analyst)
 with st.expander("🛠️ View the Time-Decay Math & Logic"):
-    st.markdown("""
+    st.markdown(r"""
     We apply a recency weight using an exponential half-life formula:
     $$W_t = e^{-\lambda \cdot t}$$
     Where $t$ is the days elapsed since the match, and $\lambda$ dictates how fast historical memory decays.
@@ -127,7 +127,7 @@ st.markdown("Select any two international sides to run a 1,000-universe simulati
 try:
     # ArviZ/xarray stores coordinate values under .coords
     available_teams = sorted(list(trace.posterior.coords["team"].values))
-except AttributeError:
+except (AttributeError, KeyError):
     # Fallback: if your coordinate name was different (e.g., "teams"), 
     # we can grab them from the shootout data or adjust this key
     available_teams = sorted(list(shootouts_df["team"].unique()))
