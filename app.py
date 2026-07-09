@@ -10,7 +10,19 @@ st.set_page_config(page_title="The Multiverse Cup", page_icon="🏆", layout="ce
 
 @st.cache_resource
 def load_model_brain():
-    # Load the heavy PyMC trace file once and cache it
+    import os
+    
+    # Failsafe 1: Check if the file actually exists in the directory
+    if not os.path.exists("nb_trace.nc"):
+        st.error("🚨 **CRITICAL ERROR:** The model brain file `nb_trace.nc` is completely missing from your GitHub repository root folder! Please check your file names.")
+        st.stop()
+        
+    # Failsafe 2: Check if the file was corrupted or uploaded as an empty file
+    if os.path.getsize("nb_trace.nc") == 0:
+        st.error("🚨 **CRITICAL ERROR:** `nb_trace.nc` was found, but it is completely empty (0 bytes)! Your Git commit may have cut off. Please re-upload the original full trace file.")
+        st.stop()
+        
+    # If it passes both checks, load it safely
     return az.from_netcdf("nb_trace.nc")
 
 trace = load_model_brain()
