@@ -15,6 +15,12 @@ def load_model_brain():
     return az.from_netcdf("nb_trace.nc")
 
 trace = load_model_brain()
+st.warning(f"📐 'atts' dimensions are: {trace.posterior['atts'].dims}")
+try:
+    st.warning(f"📋 Available coordinate keys are: {list(trace.posterior['atts'].coords.keys())}")
+    st.warning(f"🌍 First 5 coordinate values: {list(trace.posterior['atts'].coords.values())[0][:5]}")
+except Exception as e:
+    st.warning(f"❌ No string coordinates found: {e}")
 shootouts_df = pd.read_csv("shootouts.csv")
 
 # ---------------------------------------------------------
