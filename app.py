@@ -10,33 +10,40 @@ st.set_page_config(page_title="The Multiverse Cup", page_icon="🏆", layout="ce
 
 @st.cache_resource
 def load_model_brain():
-    # Using st.cache_resource stops Streamlit from re-loading the heavy trace file 
-    # every single time a user clicks a button. 
+    # Load the heavy PyMC trace file once and cache it
     return az.from_netcdf("nb_trace.nc")
 
 trace = load_model_brain()
 
-# 🕵️‍♂️ Deep Trace Inspection Script
-st.write("### 🔍 Searching the Model for the Team Map...")
+# ---------------------------------------------------------
+# 1. THE HIDDEN TRANSLATION LAYER (284 Teams Map)
+# ---------------------------------------------------------
+# Load your master results file and replicate your training filter (Post-2018)
+results_df = pd.read_csv("results.csv")
+results_df['date'] = pd.to_datetime(results_df['date'])
+filtered_df = results_df[results_df['date'] >= '2019-01-01']
 
-found_map = False
-for group in trace._groups:
-    grp_obj = getattr(trace, group)
-    if hasattr(grp_obj, "coords"):
-        for coord_name in grp_obj.coords:
-            coord_values = grp_obj.coords[coord_name].values
-            if len(coord_values) == 284:
-                st.success(f"🎯 Found a 284-element map inside: `{group}.coords['{coord_name}']`!")
-                st.write("First 5 teams in model order:", list(coord_values)[:5])
-                found_map = True
+# Recreate the exact 284 master list in alphabetical order (standard Python mapping)
+master_284_teams = sorted(list(pd.concat([filtered_df["home_team"], filtered_df["away_team"]]).unique()))
 
-if not found_map:
-    st.error("❌ The team text names are completely missing from the .nc file. They are purely numbers.")
+# 📋 THE BOUNCER: The curated 48 World Cup teams for the UI dropdowns
+world_cup_teams = [
+    "Spain", "Argentina", "France", "Brazil", "Netherlands", "England", 
+    "Portugal", "Germany", "Colombia", "Croatia", "Morocco", "Uruguay", 
+    "Belgium", "Senegal", "Egypt", "South Korea", "Ecuador", "Mexico", 
+    "Norway", "Ivory Coast", "Japan", "Switzerland", "United States", "Turkey", 
+    "Australia", "Ghana", "Algeria", "Iran", "Austria", "Canada", 
+    "Paraguay", "Saudi Arabia", "Sweden", "Panama", "Scotland", "Tunisia", 
+    "South Africa", "Qatar", "Czech Republic", "New Zealand", "Jordan", 
+    "Bosnia and Herzegovina", "DR Congo", "Cape Verde", "Uzbekistan", "Iraq", 
+    "Curacao", "Haiti"
+]
 
-shootouts_df = pd.read_csv("shootouts.csv")
+# Only include the World Cup teams that actually exist inside your 284 master dataset
+available_teams = [team for team in world_cup_teams if team in master_284_teams]
 
 # ---------------------------------------------------------
-# 1. TITLE & INTRO (The Hook)
+# 2. TITLE & INTRO
 # ---------------------------------------------------------
 st.title("🏆 The Multiverse Cup")
 st.subheader("Simulating Football Chaos with Bayesian AI")
@@ -52,9 +59,6 @@ it simulates **1,000 parallel universes** of a tournament to map out every possi
 
 st.write("---")
 
-# ---------------------------------------------------------
-# 2. PHASE 1: Data Cleaning & Weighting
-# ---------------------------------------------------------
 st.header("📈 1. Teaching the AI Football History")
 st.markdown("""
 A friendly match against a low-ranked team three years ago shouldn't carry the same weight 
@@ -64,20 +68,15 @@ To fix this, the data pipeline dynamically recalculates a **match weight** using
 Recent matches matter exponentially more than older ones.
 """)
 
-# Technical Deep Dive for Dad #1 (Data Analyst)
 with st.expander("🛠️ View the Time-Decay Math & Logic"):
     st.markdown(r"""
     We apply a recency weight using an exponential half-life formula:
     $$W_t = e^{-\lambda \cdot t}$$
     Where $t$ is the days elapsed since the match, and $\lambda$ dictates how fast historical memory decays.
     """)
-    # You can display a sample snippet of your cleaning code here if you want!
 
 st.write("---")
 
-# ---------------------------------------------------------
-# 3. PHASE 2: Embracing Chaos (The Math Engine)
-# ---------------------------------------------------------
 st.header("🎲 2. The Engine: Upgrading From Rigid Averages")
 st.markdown("""
 Most basic sports models use a standard **Poisson distribution** to predict goals. Poisson models assume a 
@@ -93,41 +92,42 @@ with st.expander("🧠 View the Hierarchical PyMC Model Architecture"):
     The model estimates individual attacking and defensive parameters for each team using a non-centered parameterization 
     to prevent geometric funnels during MCMC sampling.
     """)
-    # You can paste a code block of your PyMC model block here later
 
 st.write("---")
 
 # =========================================================
-# HELPER FUNCTION: THE ENGINE
+# 3. THE MATCH SIMULATION ENGINE (Using Index Selection)
 # =========================================================
-def simulate_match(team_a, team_b, trace, chaos_factor):
+def simulate_match(team_a, team_b, trace, chaos_factor, master_list):
     """
-    Extracts posterior parameters for both teams and draws 1,000 samples
-    from the Negative Binomial distribution to simulate a match.
+    Looks up the numeric ID for both teams from the master list, 
+    extracts their parameters, and simulates 1,000 match outcomes.
     """
-    # 🎯 Using the exact keys verified by your model diagnostic box
-    att_A = trace.posterior["atts"].sel(team=team_a).values.flatten()
-    def_A = trace.posterior["defs"].sel(team=team_a).values.flatten()
-    att_B = trace.posterior["atts"].sel(team=team_b).values.flatten()
-    def_B = trace.posterior["defs"].sel(team=team_b).values.flatten()
-    intercept = trace.posterior["intercept"].values.flatten()
+    # Find the hidden numeric index (0 to 283) for both teams
+    idx_A = master_list.index(team_a)
+    idx_B = master_list.index(team_b)
     
-    # Extracting your model's custom home and away chaos parameters
+    # Use .isel() to extract the parameters by their numeric coordinate index
+    att_A = trace.posterior["atts"].isel(atts_dim_0=idx_A).values.flatten()
+    def_A = trace.posterior["defs"].isel(defs_dim_0=idx_A).values.flatten()
+    att_B = trace.posterior["atts"].isel(atts_dim_0=idx_B).values.flatten()
+    def_B = trace.posterior["defs"].isel(defs_dim_0=idx_B).values.flatten()
+    
+    intercept = trace.posterior["intercept"].values.flatten()
     alpha_A = trace.posterior["alpha_home"].values.flatten()
     alpha_B = trace.posterior["alpha_away"].values.flatten()
 
     num_sims = 1000
-    idx = np.random.choice(len(att_A), size=num_sims, replace=False)
+    sim_idx = np.random.choice(len(att_A), size=num_sims, replace=False)
     
-    # Calculate expected goals (mu) for each universe
-    mu_A = np.exp(intercept[idx] + att_A[idx] - def_B[idx])
-    mu_B = np.exp(intercept[idx] + att_B[idx] - def_A[idx])
+    # Calculate log-linear expected goals (mu)
+    mu_A = np.exp(intercept[sim_idx] + att_A[sim_idx] - def_B[sim_idx])
+    mu_B = np.exp(intercept[sim_idx] + att_B[sim_idx] - def_A[sim_idx])
     
-    # 🎲 Wire up the Chaos Slider to your twin alpha parameters!
-    adjusted_alpha_A = alpha_A[idx] / chaos_factor
-    adjusted_alpha_B = alpha_B[idx] / chaos_factor
+    # Apply the UI chaos factor slider adjustment
+    adjusted_alpha_A = alpha_A[sim_idx] / chaos_factor
+    adjusted_alpha_B = alpha_B[sim_idx] / chaos_factor
     
-    # Convert mean and overdispersion parameters to NumPy's negative binomial format
     p_A = adjusted_alpha_A / (adjusted_alpha_A + mu_A)
     p_B = adjusted_alpha_B / (adjusted_alpha_B + mu_B)
     
@@ -135,59 +135,27 @@ def simulate_match(team_a, team_b, trace, chaos_factor):
     goals_B = np.random.negative_binomial(adjusted_alpha_B, p_B)
     
     return goals_A, goals_B
+
 # ---------------------------------------------------------
-# 4. INTERACTIVE ZONE: The Dream Matchup Engine
+# 4. INTERACTIVE ZONE
 # ---------------------------------------------------------
 st.header("🕹️ 3. Test the Multiverse Machine")
 st.markdown("Select any two international sides to run a 1,000-universe simulation.")
 
-# Pull the real team names from your model's posterior coordinates
-# Dynamically pull the team names from your data sources
-try:
-    available_teams = sorted(list(trace.posterior.coords["team"].values))
-except (AttributeError, KeyError):
-    cols = shootouts_df.columns
-    if "home_team" in cols and "away_team" in cols:
-        all_teams = pd.concat([shootouts_df["home_team"], shootouts_df["away_team"]]).unique()
-        available_teams = sorted(list(all_teams))
-    elif "team" in cols:
-        available_teams = sorted(list(shootouts_df["team"].unique()))
-    else:
-        available_teams = []
-
-# 📋 THE BOUNCER: Define exactly which teams are allowed in your model (Updated for 2026)
-world_cup_teams = [
-    "Spain", "Argentina", "France", "Brazil", "Netherlands", "England", 
-    "Portugal", "Germany", "Colombia", "Croatia", "Morocco", "Uruguay", 
-    "Belgium", "Senegal", "Egypt", "South Korea", "Ecuador", "Mexico", 
-    "Norway", "Ivory Coast", "Japan", "Switzerland", "United States", "Turkey", 
-    "Australia", "Ghana", "Algeria", "Iran", "Austria", "Canada", 
-    "Paraguay", "Saudi Arabia", "Sweden", "Panama", "Scotland", "Tunisia", 
-    "South Africa", "Qatar", "Czech Republic", "New Zealand", "Jordan", 
-    "Bosnia and Herzegovina", "DR Congo", "Cape Verde", "Uzbekistan", "Iraq", 
-    "Curacao", "Haiti"
-]
-
-# A quick list comprehension to filter out any team NOT in your World Cup list
-available_teams = [team for team in available_teams if team in world_cup_teams]
-
 col1, col2 = st.columns(2)
 with col1:
-    team_a = st.selectbox("Select Team A", available_teams, index=0)
+    team_a = st.selectbox("Select Team A (Home Side)", available_teams, index=0)
 with col2:
-    team_b = st.selectbox("Select Team B", available_teams, index=1 if len(available_teams) > 1 else 0)
+    team_b = st.selectbox("Select Team B (Away Side)", available_teams, index=1 if len(available_teams) > 1 else 0)
 
-# Slider for the Chaos Level
 chaos_factor = st.slider("Adjust Chaos Level (Overdispersion)", min_value=0.1, max_value=2.0, value=1.0)
 
-# The Simulation Trigger Button
 if st.button("🚀 Run Match Simulation"):
-    
-    # 1. Run the function we defined above
     with st.spinner("Collapsing quantum probabilities..."):
-        goals_A, goals_B = simulate_match(team_a, team_b, trace, chaos_factor)
+        # Pass the teams, the trace, the slider value, and the hidden 284 master list map
+        goals_A, goals_B = simulate_match(team_a, team_b, trace, chaos_factor, master_284_teams)
     
-    # 2. Math: Calculate outcomes across all 1,000 universes
+    # Calculate outcomes across all universes
     wins_A = np.sum(goals_A > goals_B)
     wins_B = np.sum(goals_B > goals_A)
     draws = np.sum(goals_A == goals_B)
@@ -196,7 +164,6 @@ if st.button("🚀 Run Match Simulation"):
     pct_B = (wins_B / 1000) * 100
     pct_draw = (draws / 1000) * 100
     
-    # 3. Display the Headline Results using clean visual columns
     st.write(f"### 📊 Simulation Results: {team_a} vs {team_b}")
     
     m1, m2, m3 = st.columns(3)
@@ -204,7 +171,6 @@ if st.button("🚀 Run Match Simulation"):
     m2.metric(label="🤝 Draw Probability", value=f"{pct_draw:.1f}%")
     m3.metric(label=f"🏆 {team_b} Win Probability", value=f"{pct_B:.1f}%")
     
-    # 4. Contextual summary for the dads
     st.info(f"""
     In 1,000 alternate realities, **{team_a}** won {wins_A} times, 
     **{team_b}** won {wins_B} times, and the match ended in a draw {draws} times. 
@@ -212,13 +178,12 @@ if st.button("🚀 Run Match Simulation"):
     """)
 
 # ---------------------------------------------------------
-# 5. PHASE 4: The Tournament Finale
+# 5. PHASE 4: Tournament Finale Placeholder
 # ---------------------------------------------------------
+st.write("---")
 st.header("📊 4. The Grand Tournament Simulation")
 st.markdown("""
 Finally, we put it all together. By taking these team strengths and simulating an entire bracket 
 structure 1,000 times, we get an accurate survival matrix showing who is actually built to go all the way.
 """)
-
-# Placeholder for your final master dataframe or survival chart
 st.caption("Final tournament survival data table will live here.")
