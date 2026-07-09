@@ -15,12 +15,18 @@ def load_model_brain():
     return az.from_netcdf("nb_trace.nc")
 
 trace = load_model_brain()
-st.warning(f"📐 'atts' dimensions are: {trace.posterior['atts'].dims}")
-try:
-    st.warning(f"📋 Available coordinate keys are: {list(trace.posterior['atts'].coords.keys())}")
-    st.warning(f"🌍 First 5 coordinate values: {list(trace.posterior['atts'].coords.values())[0][:5]}")
-except Exception as e:
-    st.warning(f"❌ No string coordinates found: {e}")
+num_model_teams = trace.posterior.sizes["atts_dim_0"]
+st.warning(f"📊 Your AI model expects exactly {num_model_teams} unique teams.")
+
+if "home_team" in shootouts_df.columns:
+    # Option A: Alphabetical Order
+    alpha_teams = sorted(list(pd.concat([shootouts_df["home_team"], shootouts_df["away_team"]]).unique()))
+    # Option B: Order of appearance in the CSV
+    appearance_teams = list(pd.concat([shootouts_df["home_team"], shootouts_df["away_team"]]).unique())
+    
+    st.write(f"📋 Your CSV has {len(alpha_teams)} unique teams total.")
+    st.write(f"🔤 First 5 Alphabetically: {alpha_teams[:5]}")
+    st.write(f"⏱️ First 5 by Appearance: {appearance_teams[:5]}")
 shootouts_df = pd.read_csv("shootouts.csv")
 
 # ---------------------------------------------------------
