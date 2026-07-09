@@ -15,6 +15,7 @@ def load_model_brain():
     return az.from_netcdf("nb_trace.nc")
 
 trace = load_model_brain()
+st.warning(f"🕵️‍♂️ Your model's actual variable names are: {list(trace.posterior.data_vars.keys())}")
 shootouts_df = pd.read_csv("shootouts.csv")
 
 # ---------------------------------------------------------
