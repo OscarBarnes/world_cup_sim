@@ -124,22 +124,34 @@ st.header("🕹️ 3. Test the Multiverse Machine")
 st.markdown("Select any two international sides to run a 1,000-universe simulation.")
 
 # Pull the real team names from your model's posterior coordinates
+# Dynamically pull the team names from your data sources
 try:
-    # 1. Try to pull directly from the model's brain coordinates
     available_teams = sorted(list(trace.posterior.coords["team"].values))
 except (AttributeError, KeyError):
-    # 2. Fallback: If that fails, check the CSV columns dynamically
     cols = shootouts_df.columns
-    
     if "home_team" in cols and "away_team" in cols:
-        # If it's a match list, combine home and away teams to get every unique country
         all_teams = pd.concat([shootouts_df["home_team"], shootouts_df["away_team"]]).unique()
         available_teams = sorted(list(all_teams))
     elif "team" in cols:
         available_teams = sorted(list(shootouts_df["team"].unique()))
     else:
-        # 3. Ultimate Emergency Fallback (so the page absolute never crashes)
-        available_teams = sorted(["Argentina", "Brazil", "England", "France", "Germany", "Netherlands", "Spain"])
+        available_teams = []
+
+# 📋 THE BOUNCER: Define exactly which teams are allowed in your model (Updated for 2026)
+world_cup_teams = [
+    "Spain", "Argentina", "France", "Brazil", "Netherlands", "England", 
+    "Portugal", "Germany", "Colombia", "Croatia", "Morocco", "Uruguay", 
+    "Belgium", "Senegal", "Egypt", "South Korea", "Ecuador", "Mexico", 
+    "Norway", "Ivory Coast", "Japan", "Switzerland", "United States", "Turkey", 
+    "Australia", "Ghana", "Algeria", "Iran", "Austria", "Canada", 
+    "Paraguay", "Saudi Arabia", "Sweden", "Panama", "Scotland", "Tunisia", 
+    "South Africa", "Qatar", "Czech Republic", "New Zealand", "Jordan", 
+    "Bosnia and Herzegovina", "DR Congo", "Cape Verde", "Uzbekistan", "Iraq", 
+    "Curacao", "Haiti"
+]
+
+# A quick list comprehension to filter out any team NOT in your World Cup list
+available_teams = [team for team in available_teams if team in world_cup_teams]
 
 col1, col2 = st.columns(2)
 with col1:
