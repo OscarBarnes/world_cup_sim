@@ -15,7 +15,6 @@ def load_model_brain():
     return az.from_netcdf("nb_trace.nc")
 
 trace = load_model_brain()
-st.warning(f"🕵️‍♂️ Your model's actual variable names are: {list(trace.posterior.data_vars.keys())}")
 shootouts_df = pd.read_csv("shootouts.csv")
 
 # ---------------------------------------------------------
@@ -88,43 +87,36 @@ def simulate_match(team_a, team_b, trace, chaos_factor):
     Extracts posterior parameters for both teams and draws 1,000 samples
     from the Negative Binomial distribution to simulate a match.
     """
-    # ⚠️ MATCH THESE KEYS TO YOUR YELLOW WARNING BOX!
-    # If your box says ['attack', 'defense', 'baseline', 'alpha'], change these strings!
-    try:
-        att_A = trace.posterior["atts"].sel(team=team_a).values.flatten()
-        def_A = trace.posterior["defs"].sel(team=team_a).values.flatten()
-        att_B = trace.posterior["atts"].sel(team=team_b).values.flatten()
-        def_B = trace.posterior["defs"].sel(team=team_b).values.flatten()
-        intercept = trace.posterior["intercept"].values.flatten()
-        alpha = trace.posterior["alpha"].values.flatten()
-    except KeyError:
-        # Fallback option if you used alternative common names
-        att_A = trace.posterior["attack"].sel(team=team_a).values.flatten()
-        def_A = trace.posterior["defense"].sel(team=team_a).values.flatten()
-        att_B = trace.posterior["attack"].sel(team=team_b).values.flatten()
-        def_B = trace.posterior["defense"].sel(team=team_b).values.flatten()
-        intercept = trace.posterior["baseline"].values.flatten()
-        alpha = trace.posterior["alpha"].values.flatten()
+    # 🎯 Using the exact keys verified by your model diagnostic box
+    att_A = trace.posterior["atts"].sel(team=team_a).values.flatten()
+    def_A = trace.posterior["defs"].sel(team=team_a).values.flatten()
+    att_B = trace.posterior["atts"].sel(team=team_b).values.flatten()
+    def_B = trace.posterior["defs"].sel(team=team_b).values.flatten()
+    intercept = trace.posterior["intercept"].values.flatten()
+    
+    # Extracting your model's custom home and away chaos parameters
+    alpha_A = trace.posterior["alpha_home"].values.flatten()
+    alpha_B = trace.posterior["alpha_away"].values.flatten()
 
     num_sims = 1000
     idx = np.random.choice(len(att_A), size=num_sims, replace=False)
     
+    # Calculate expected goals (mu) for each universe
     mu_A = np.exp(intercept[idx] + att_A[idx] - def_B[idx])
     mu_B = np.exp(intercept[idx] + att_B[idx] - def_A[idx])
     
-    # 🎲 Wire up the Chaos Slider!
-    # In a Negative Binomial, dividing alpha by the chaos factor increases the variance.
-    # Higher chaos factor slider = wilder, more unpredictable scorelines.
-    adjusted_alpha = alpha[idx] / chaos_factor
+    # 🎲 Wire up the Chaos Slider to your twin alpha parameters!
+    adjusted_alpha_A = alpha_A[idx] / chaos_factor
+    adjusted_alpha_B = alpha_B[idx] / chaos_factor
     
-    p_A = adjusted_alpha / (adjusted_alpha + mu_A)
-    p_B = adjusted_alpha / (adjusted_alpha + mu_B)
+    # Convert mean and overdispersion parameters to NumPy's negative binomial format
+    p_A = adjusted_alpha_A / (adjusted_alpha_A + mu_A)
+    p_B = adjusted_alpha_B / (adjusted_alpha_B + mu_B)
     
-    goals_A = np.random.negative_binomial(adjusted_alpha, p_A)
-    goals_B = np.random.negative_binomial(adjusted_alpha, p_B)
+    goals_A = np.random.negative_binomial(adjusted_alpha_A, p_A)
+    goals_B = np.random.negative_binomial(adjusted_alpha_B, p_B)
     
     return goals_A, goals_B
-
 # ---------------------------------------------------------
 # 4. INTERACTIVE ZONE: The Dream Matchup Engine
 # ---------------------------------------------------------
