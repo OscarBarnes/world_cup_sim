@@ -15,18 +15,24 @@ def load_model_brain():
     return az.from_netcdf("nb_trace.nc")
 
 trace = load_model_brain()
-num_model_teams = trace.posterior.sizes["atts_dim_0"]
-st.warning(f"📊 Your AI model expects exactly {num_model_teams} unique teams.")
 
-if "home_team" in shootouts_df.columns:
-    # Option A: Alphabetical Order
-    alpha_teams = sorted(list(pd.concat([shootouts_df["home_team"], shootouts_df["away_team"]]).unique()))
-    # Option B: Order of appearance in the CSV
-    appearance_teams = list(pd.concat([shootouts_df["home_team"], shootouts_df["away_team"]]).unique())
-    
-    st.write(f"📋 Your CSV has {len(alpha_teams)} unique teams total.")
-    st.write(f"🔤 First 5 Alphabetically: {alpha_teams[:5]}")
-    st.write(f"⏱️ First 5 by Appearance: {appearance_teams[:5]}")
+# 🕵️‍♂️ Deep Trace Inspection Script
+st.write("### 🔍 Searching the Model for the Team Map...")
+
+found_map = False
+for group in trace._groups:
+    grp_obj = getattr(trace, group)
+    if hasattr(grp_obj, "coords"):
+        for coord_name in grp_obj.coords:
+            coord_values = grp_obj.coords[coord_name].values
+            if len(coord_values) == 284:
+                st.success(f"🎯 Found a 284-element map inside: `{group}.coords['{coord_name}']`!")
+                st.write("First 5 teams in model order:", list(coord_values)[:5])
+                found_map = True
+
+if not found_map:
+    st.error("❌ The team text names are completely missing from the .nc file. They are purely numbers.")
+
 shootouts_df = pd.read_csv("shootouts.csv")
 
 # ---------------------------------------------------------
