@@ -2,5 +2,7 @@ streamlit
 pandas
 numpy
 arviz
-netcdf4
 xarray
+netcdf4
+h5netcdf
+scipy
