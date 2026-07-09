@@ -1,6 +1,6 @@
 streamlit
 pandas
 numpy
-pymc
 arviz
 netcdf4
+xarray
