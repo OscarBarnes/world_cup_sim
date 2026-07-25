@@ -186,12 +186,223 @@ if st.button("🚀 Run Match Simulation"):
     """)
 
 # ---------------------------------------------------------
-# 5. PHASE 4: Tournament Finale Placeholder
+# 4. THE GRAND TOURNAMENT SIMULATION & MULTIVERSE LOGS
 # ---------------------------------------------------------
-st.write("---")
-st.header("📊 4. The Grand Tournament Simulation")
+st.header("📊 4. The Grand Tournament Multiverse Engine")
+
 st.markdown("""
-Finally, we put it all together. By taking these team strengths and simulating an entire bracket 
-structure 1,000 times, we get an accurate survival matrix showing who is actually built to go all the way.
+Welcome to the main event. While single-match predictions are useful, tournament football introduces cumulative fatigue, 
+bracket pathways, and knockout chaos. 
+
+Below, the engine simulates **1,000 complete 2026 World Cup tournaments** (104,000 total matches). It maps each team's 
+path through the 12-group phase, the 32-team knockout bracket, and tracks the most dramatic realities in the multiverse.
 """)
-st.caption("Final tournament survival data table will live here.")
+
+# Setup simulation parameters
+st.subheader("⚙️ Simulation Settings")
+c1, c2 = st.columns(2)
+with c1:
+    tourney_chaos = st.slider("Tournament Chaos Level (Overdispersion)", min_value=0.1, max_value=2.0, value=1.0, key="grand_chaos")
+with c2:
+    st.info("⚡ **Fixed Multiverse Scale:** Set to exactly **1,000 Full Tournaments** for statistically robust survival probabilities.")
+
+def run_1000_tournaments(chaos_factor):
+    num_sims = 1000
+    num_samples = len(trace.posterior["intercept"].values.flatten())
+    
+    # 1. Initialize tracking structures
+    stats = {team: {"R32": 0, "R16": 0, "QF": 0, "SF": 0, "Final": 0, "Champ": 0} for team in available_teams}
+    thrillers = []  # To store wild, high-scoring matches
+    upsets = []     # To store major knockout giant-killings
+    
+    # Extract parameter matrices once for max speed
+    team_indices = [master_284_teams.index(t) for t in available_teams]
+    atts_all = trace.posterior["atts"].values.reshape(-1, 284)[:, team_indices]
+    defs_all = trace.posterior["defs"].values.reshape(-1, 284)[:, team_indices]
+    intercept_all = trace.posterior["intercept"].values.flatten()
+    alpha_home_all = trace.posterior["alpha_home"].values.flatten()
+    alpha_away_all = trace.posterior["alpha_away"].values.flatten()
+    
+    id_to_team = {i: team for i, team in enumerate(available_teams)}
+    
+    # Pre-calculate overall team power ratings (Att - Def) for upset detection
+    avg_atts = atts_all.mean(axis=0)
+    avg_defs = defs_all.mean(axis=0)
+    power_ratings = avg_atts - avg_defs
+    
+    for sim_id in range(1, num_sims + 1):
+        s = np.random.randint(0, num_samples)
+        
+        # Shuffle 48 teams into 12 groups of 4
+        shuffled_ids = list(range(len(available_teams)))
+        np.random.shuffle(shuffled_ids)
+        groups = [shuffled_ids[i:i+4] for i in range(0, len(shuffled_ids), 4)]
+        
+        r32_teams = []
+        third_place_pool = []
+        
+        # --- GROUP STAGE ---
+        for group in groups:
+            g_stats = {t_id: {"pts": 0, "gd": 0, "gs": 0} for t_id in group}
+            for i in range(4):
+                for j in range(i+1, 4):
+                    tA, tB = group[i], group[j]
+                    
+                    mu_A = np.exp(intercept_all[s] + atts_all[s, tA] - defs_all[s, tB])
+                    mu_B = np.exp(intercept_all[s] + atts_all[s, tB] - defs_all[s, tA])
+                    
+                    aA = alpha_home_all[s] / chaos_factor
+                    aB = alpha_away_all[s] / chaos_factor
+                    
+                    gA = np.random.negative_binomial(aA, aA / (aA + mu_A))
+                    gB = np.random.negative_binomial(aB, aB / (aB + mu_B))
+                    
+                    g_stats[tA]["gs"] += gA
+                    g_stats[tB]["gs"] += gB
+                    g_stats[tA]["gd"] += (gA - gB)
+                    g_stats[tB]["gd"] += (gB - gA)
+                    
+                    if gA > gB: g_stats[tA]["pts"] += 3
+                    elif gB > gA: g_stats[tB]["pts"] += 3
+                    else:
+                        g_stats[tA]["pts"] += 1
+                        g_stats[tB]["pts"] += 1
+                    
+                    # Track thrillers (7+ total goals)
+                    if (gA + gB) >= 7 and len(thrillers) < 15:
+                        thrillers.append({
+                            "Universe": f"#{sim_id}",
+                            "Stage": "Group Stage",
+                            "Matchup": f"{id_to_team[tA]} {gA} - {gB} {id_to_team[tB]}",
+                            "Total Goals": gA + gB
+                        })
+                        
+            ranked = sorted(group, key=lambda x: (g_stats[x]["pts"], g_stats[x]["gd"], g_stats[x]["gs"]), reverse=True)
+            r32_teams.append(ranked[0])
+            r32_teams.append(ranked[1])
+            third_place_pool.append((ranked[2], g_stats[ranked[2]]))
+            
+        # Top 8 3rd-place teams advance
+        ranked_thirds = sorted(third_place_pool, key=lambda x: (x[1]["pts"], x[1]["gd"], x[1]["gs"]), reverse=True)
+        for k in range(8):
+            r32_teams.append(ranked_thirds[k][0])
+            
+        for t in r32_teams: stats[id_to_team[t]]["R32"] += 1
+        
+        # --- KNOCKOUT STAGE HELPER ---
+        def play_ko(tA, tB, stage_name):
+            mu_A = np.exp(intercept_all[s] + atts_all[s, tA] - defs_all[s, tB])
+            mu_B = np.exp(intercept_all[s] + atts_all[s, tB] - defs_all[s, tA])
+            aA = alpha_home_all[s] / chaos_factor
+            aB = alpha_away_all[s] / chaos_factor
+            
+            gA = np.random.negative_binomial(aA, aA / (aA + mu_A))
+            gB = np.random.negative_binomial(aB, aB / (aB + mu_B))
+            
+            # Thriller check for knockouts
+            if (gA + gB) >= 6 and len(thrillers) < 15:
+                thrillers.append({
+                    "Universe": f"#{sim_id}",
+                    "Stage": stage_name,
+                    "Matchup": f"{id_to_team[tA]} {gA} - {gB} {id_to_team[tB]}",
+                    "Total Goals": gA + gB
+                })
+                
+            winner = None
+            if gA > gB: winner = tA
+            elif gB > gA: winner = tB
+            else: winner = tA if np.random.rand() > 0.5 else tB # Penalty Shootout
+            
+            loser = tB if winner == tA else tA
+            
+            # Upset check (if underdog rating is significantly lower but wins)
+            rating_gap = power_ratings[loser] - power_ratings[winner]
+            if rating_gap > 0.45 and len(upsets) < 15:
+                upsets.append({
+                    "Universe": f"#{sim_id}",
+                    "Stage": stage_name,
+                    "Giant Killer": id_to_team[winner],
+                    "Fallen Heavyweight": id_to_team[loser],
+                    "Score": f"{gA}-{gB}" if winner == tA else f"{gB}-{gA}",
+                    "Rating Gap": round(rating_gap, 2)
+                })
+                
+            return winner
+
+        # --- KNOCKOUT BRACKET ---
+        np.random.shuffle(r32_teams)
+        
+        r16 = [play_ko(r32_teams[i], r32_teams[i+1], "Round of 32") for i in range(0, 32, 2)]
+        for t in r16: stats[id_to_team[t]]["R16"] += 1
+            
+        qf = [play_ko(r16[i], r16[i+1], "Round of 16") for i in range(0, 16, 2)]
+        for t in qf: stats[id_to_team[t]]["QF"] += 1
+            
+        sf = [play_ko(qf[i], qf[i+1], "Quarterfinal") for i in range(0, 8, 2)]
+        for t in sf: stats[id_to_team[t]]["SF"] += 1
+            
+        finalists = [play_ko(sf[i], sf[i+1], "Semifinal") for i in range(0, 4, 2)]
+        for t in finalists: stats[id_to_team[t]]["Final"] += 1
+            
+        winner = play_ko(finalists[0], finalists[1], "Final")
+        stats[id_to_team[winner]]["Champ"] += 1
+
+    # Format Survival Matrix DataFrame
+    matrix_records = []
+    for team, steps in stats.items():
+        matrix_records.append({
+            "Team": team,
+            "Round of 32 %": (steps["R32"] / num_sims) * 100,
+            "Round of 16 %": (steps["R16"] / num_sims) * 100,
+            "Quarterfinals %": (steps["QF"] / num_sims) * 100,
+            "Semifinals %": (steps["SF"] / num_sims) * 100,
+            "Final %": (steps["Final"] / num_sims) * 100,
+            "Champion %": (steps["Champ"] / num_sims) * 100
+        })
+        
+    df_matrix = pd.DataFrame(matrix_records).sort_values(by="Champion %", ascending=False)
+    df_upsets = pd.DataFrame(upsets)
+    df_thrillers = pd.DataFrame(thrillers).sort_values(by="Total Goals", ascending=False) if thrillers else pd.DataFrame()
+    
+    return df_matrix, df_upsets, df_thrillers
+
+# --- TRIGGER BUTTON & DISPLAY ---
+if st.button("🚀 Run 1,000 Multiverse Simulations"):
+    with st.spinner("Simulating 1,000 full tournament brackets across parallel dimensions..."):
+        df_matrix, df_upsets, df_thrillers = run_1000_tournaments(tourney_chaos)
+        
+    st.write("---")
+    
+    # 1. SURVIVAL MATRIX DISPLAY
+    st.subheader("🏆 1. The World Cup Survival Matrix")
+    st.markdown("Percentage chance of each country reaching each progressive milestone across 1,000 realities:")
+    st.dataframe(
+        df_matrix.style.format({
+            "Round of 32 %": "{:.1f}%",
+            "Round of 16 %": "{:.1f}%",
+            "Quarterfinals %": "{:.1f}%",
+            "Semifinals %": "{:.1f}%",
+            "Final %": "{:.1f}%",
+            "Champion %": "{:.1f}%"
+        }),
+        use_container_width=True,
+        height=500
+    )
+
+    # 2. DRAMATIC UPSETS LOG DISPLAY
+    st.write("---")
+    st.subheader("⚡ 2. Multiverse Shockers: Major Knockout Upsets")
+    st.markdown("Notable instances where a lower-ranked team defeated an elite favorite in a knockout tie:")
+    if not df_upsets.empty:
+        st.dataframe(df_upsets, use_container_width=True)
+    else:
+        st.info("No giant-killings met the threshold in this run. Try increasing the Chaos Level!")
+
+    # 3. HIGH SCORING THRILLERS LOG DISPLAY
+    st.write("---")
+    st.subheader("🔥 3. High-Scoring Multiverse Thrillers")
+    st.markdown("A sample of the highest scoring, wild goalfests recorded during the 100,000+ total matches:")
+    if not df_thrillers.empty:
+        st.dataframe(df_thrillers, use_container_width=True)
+    else:
+        st.info("No extreme thrillers met the score threshold in this run.")
