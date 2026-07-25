@@ -236,9 +236,6 @@ def run_1000_tournaments(chaos_factor):
     thrillers = []  # To store wild, high-scoring matches
     upsets = []     # To store major knockout giant-killings
     
-    # Group letter mapping corresponding to index 0 to 11
-    group_letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
-    
     # Extract parameter matrices once for max speed
     team_indices = [master_284_teams.index(t) for t in available_teams]
     atts_all = trace.posterior["atts"].values.reshape(-1, 284)[:, team_indices]
@@ -257,15 +254,14 @@ def run_1000_tournaments(chaos_factor):
     for sim_id in range(1, num_sims + 1):
         s = np.random.randint(0, num_samples)
         
+        # Use official World Cup groups
         groups = fixed_groups_ids
         
-        winners = {}
-        runners_up = {}
+        r32_teams = []
         third_place_pool = []
         
         # --- GROUP STAGE ---
-        for g_idx, group in enumerate(groups):
-            g_letter = group_letters[g_idx]
+        for group in groups:
             g_stats = {t_id: {"pts": 0, "gd": 0, "gs": 0} for t_id in group}
             group_size = len(group)
             
@@ -303,29 +299,16 @@ def run_1000_tournaments(chaos_factor):
                         })
                         
             ranked = sorted(group, key=lambda x: (g_stats[x]["pts"], g_stats[x]["gd"], g_stats[x]["gs"]), reverse=True)
-            winners[g_letter] = ranked[0]
-            runners_up[g_letter] = ranked[1]
+            r32_teams.append(ranked[0])
+            r32_teams.append(ranked[1])
             third_place_pool.append((ranked[2], g_stats[ranked[2]]))
             
-        # Top 8 3rd-place teams advance as wildcards
+        # Top 8 3rd-place teams advance
         ranked_thirds = sorted(third_place_pool, key=lambda x: (x[1]["pts"], x[1]["gd"], x[1]["gs"]), reverse=True)
-        top8_thirds = [ranked_thirds[k][0] for k in range(8)]
-        
-        # Map top 8 third-place teams to wildcard match slots (74, 77, 79, 80, 81, 82, 85, 87)
-        assigned_wildcards = {
-            74: top8_thirds[0],
-            77: top8_thirds[1],
-            79: top8_thirds[2],
-            80: top8_thirds[3],
-            81: top8_thirds[4],
-            82: top8_thirds[5],
-            85: top8_thirds[6],
-            87: top8_thirds[7],
-        }
-        
-        # Record all 32 qualified teams
-        for t in list(winners.values()) + list(runners_up.values()) + top8_thirds:
-            stats[id_to_team[t]]["R32"] += 1
+        for k in range(8):
+            r32_teams.append(ranked_thirds[k][0])
+            
+        for t in r32_teams: stats[id_to_team[t]]["R32"] += 1
         
         # --- KNOCKOUT STAGE HELPER ---
         def play_ko(tA, tB, stage_name):
@@ -367,61 +350,23 @@ def run_1000_tournaments(chaos_factor):
                 
             return winner
 
-        # --- OFFICIAL 2026 KNOCKOUT BRACKET ---
-        # Round of 32 (Matches 73 to 88)
-        r32 = {}
-        r32[73] = play_ko(runners_up['A'], runners_up['B'], "Round of 32")
-        r32[74] = play_ko(winners['E'], assigned_wildcards[74], "Round of 32")
-        r32[75] = play_ko(winners['F'], runners_up['C'], "Round of 32")
-        r32[76] = play_ko(winners['C'], runners_up['F'], "Round of 32")
-        r32[77] = play_ko(winners['I'], assigned_wildcards[77], "Round of 32")
-        r32[78] = play_ko(runners_up['E'], runners_up['I'], "Round of 32")
-        r32[79] = play_ko(winners['A'], assigned_wildcards[79], "Round of 32")
-        r32[80] = play_ko(winners['L'], assigned_wildcards[80], "Round of 32")
-        r32[81] = play_ko(winners['D'], assigned_wildcards[81], "Round of 32")
-        r32[82] = play_ko(winners['G'], assigned_wildcards[82], "Round of 32")
-        r32[83] = play_ko(runners_up['K'], runners_up['L'], "Round of 32")
-        r32[84] = play_ko(winners['H'], runners_up['J'], "Round of 32")
-        r32[85] = play_ko(winners['B'], assigned_wildcards[85], "Round of 32")
-        r32[86] = play_ko(winners['J'], runners_up['H'], "Round of 32")
-        r32[87] = play_ko(winners['K'], assigned_wildcards[87], "Round of 32")
-        r32[88] = play_ko(runners_up['D'], runners_up['G'], "Round of 32")
-
-        # Round of 16 (Matches 89 to 96)
-        r16 = {}
-        r16[89] = play_ko(r32[73], r32[74], "Round of 16")
-        r16[90] = play_ko(r32[75], r32[77], "Round of 16")
-        r16[91] = play_ko(r32[76], r32[78], "Round of 16")
-        r16[92] = play_ko(r32[79], r32[80], "Round of 16")
-        r16[93] = play_ko(r32[83], r32[84], "Round of 16")
-        r16[94] = play_ko(r32[81], r32[82], "Round of 16")
-        r16[95] = play_ko(r32[86], r32[88], "Round of 16")
-        r16[96] = play_ko(r32[85], r32[87], "Round of 16")
-
-        for t in r16.values(): stats[id_to_team[t]]["R16"] += 1
-
-        # Quarterfinals (Matches 97 to 100)
-        qf = {}
-        qf[97] = play_ko(r16[89], r16[90], "Quarterfinal")
-        qf[98] = play_ko(r16[93], r16[94], "Quarterfinal")
-        qf[99] = play_ko(r16[91], r16[92], "Quarterfinal")
-        qf[100] = play_ko(r16[95], r16[96], "Quarterfinal")
-
-        for t in qf.values(): stats[id_to_team[t]]["QF"] += 1
-
-        # Semifinals (Matches 101 & 102)
-        sf = {}
-        sf[101] = play_ko(qf[97], qf[98], "Semifinal")
-        sf[102] = play_ko(qf[99], qf[100], "Semifinal")
-
-        for t in sf.values(): stats[id_to_team[t]]["SF"] += 1
-
-        # Finalists & Champion
-        stats[id_to_team[sf[101]]]["Final"] += 1
-        stats[id_to_team[sf[102]]]["Final"] += 1
-
-        champion = play_ko(sf[101], sf[102], "Final")
-        stats[id_to_team[champion]]["Champ"] += 1
+        # --- KNOCKOUT BRACKET ---
+        np.random.shuffle(r32_teams)
+        
+        r16 = [play_ko(r32_teams[i], r32_teams[i+1], "Round of 32") for i in range(0, 32, 2)]
+        for t in r16: stats[id_to_team[t]]["R16"] += 1
+            
+        qf = [play_ko(r16[i], r16[i+1], "Round of 16") for i in range(0, 16, 2)]
+        for t in qf: stats[id_to_team[t]]["QF"] += 1
+            
+        sf = [play_ko(qf[i], qf[i+1], "Quarterfinal") for i in range(0, 8, 2)]
+        for t in sf: stats[id_to_team[t]]["SF"] += 1
+            
+        finalists = [play_ko(sf[i], sf[i+1], "Semifinal") for i in range(0, 4, 2)]
+        for t in finalists: stats[id_to_team[t]]["Final"] += 1
+            
+        winner = play_ko(finalists[0], finalists[1], "Final")
+        stats[id_to_team[winner]]["Champ"] += 1
 
     # Format Survival Matrix DataFrame
     matrix_records = []
@@ -441,3 +386,44 @@ def run_1000_tournaments(chaos_factor):
     df_thrillers = pd.DataFrame(thrillers).sort_values(by="Total Goals", ascending=False) if thrillers else pd.DataFrame()
     
     return df_matrix, df_upsets, df_thrillers
+
+# --- TRIGGER BUTTON & DISPLAY ---
+if st.button("🚀 Run 1,000 Multiverse Simulations"):
+    with st.spinner("Simulating 1,000 full tournament brackets across parallel dimensions..."):
+        df_matrix, df_upsets, df_thrillers = run_1000_tournaments(tourney_chaos)
+        
+    st.write("---")
+    
+    # 1. SURVIVAL MATRIX DISPLAY
+    st.subheader("🏆 1. The World Cup Survival Matrix")
+    st.markdown("Percentage chance of each country reaching each progressive milestone across 1,000 realities:")
+    st.dataframe(
+        df_matrix.style.format({
+            "Round of 32 %": "{:.1f}%",
+            "Round of 16 %": "{:.1f}%",
+            "Quarterfinals %": "{:.1f}%",
+            "Semifinals %": "{:.1f}%",
+            "Final %": "{:.1f}%",
+            "Champion %": "{:.1f}%"
+        }),
+        use_container_width=True,
+        height=500
+    )
+
+    # 2. DRAMATIC UPSETS LOG DISPLAY
+    st.write("---")
+    st.subheader("⚡ 2. Multiverse Shockers: Major Knockout Upsets")
+    st.markdown("Notable instances where a lower-ranked team defeated an elite favorite in a knockout tie:")
+    if not df_upsets.empty:
+        st.dataframe(df_upsets, use_container_width=True)
+    else:
+        st.info("No giant-killings met the threshold in this run. Try increasing the Chaos Level!")
+
+    # 3. HIGH SCORING THRILLERS LOG DISPLAY
+    st.write("---")
+    st.subheader("🔥 3. High-Scoring Multiverse Thrillers")
+    st.markdown("A sample of the highest scoring, wild goalfests recorded during the 100,000+ total matches:")
+    if not df_thrillers.empty:
+        st.dataframe(df_thrillers, use_container_width=True)
+    else:
+        st.info("No extreme thrillers met the score threshold in this run.")
