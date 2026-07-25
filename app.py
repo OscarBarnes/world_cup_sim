@@ -47,6 +47,21 @@ world_cup_teams = [
     "Curacao", "Haiti"
 ]
 
+tournament_groups_fixed = {
+    'Group A': ['Mexico', 'South Africa', 'South Korea', 'Czech Republic'],
+    'Group B': ['Canada', 'Bosnia and Herzegovina', 'Qatar', 'Switzerland'],
+    'Group C': ['Brazil', 'Morocco', 'Haiti', 'Scotland'],
+    'Group D': ['United States', 'Paraguay', 'Australia', 'Turkey'],
+    'Group E': ['Germany', 'Curacao', 'Ivory Coast', 'Ecuador'],
+    'Group F': ['Netherlands', 'Japan', 'Sweden', 'Tunisia'],
+    'Group G': ['Belgium', 'Egypt', 'Iran', 'New Zealand'],
+    'Group H': ['Spain', 'Cape Verde', 'Saudi Arabia', 'Uruguay'],
+    'Group I': ['France', 'Senegal', 'Iraq', 'Norway'],
+    'Group J': ['Argentina', 'Algeria', 'Austria', 'Jordan'],
+    'Group K': ['Portugal', 'DR Congo', 'Uzbekistan', 'Colombia'],
+    'Group L': ['England', 'Croatia', 'Ghana', 'Panama'],
+}
+
 # Check for any team name mismatches between World Cup list and master list
 missing_teams = [team for team in world_cup_teams if team not in master_284_teams]
 if missing_teams:
@@ -211,6 +226,12 @@ with c1:
 with c2:
     st.info("⚡ **Fixed Multiverse Scale:** Set to exactly **1,000 Full Tournaments** for statistically robust survival probabilities.")
 
+# Convert team name strings in the fixed groups into numeric indices (0 to 47)
+fixed_groups_ids = [
+    [available_teams.index(team) for team in team_list]
+    for group_name, team_list in tournament_groups_fixed.items()
+]
+
 def run_1000_tournaments(chaos_factor):
     num_sims = 1000
     num_samples = len(trace.posterior["intercept"].values.flatten())
@@ -239,9 +260,7 @@ def run_1000_tournaments(chaos_factor):
         s = np.random.randint(0, num_samples)
         
         # Shuffle 48 teams into 12 groups of 4
-        shuffled_ids = list(range(len(available_teams)))
-        np.random.shuffle(shuffled_ids)
-        groups = [shuffled_ids[i:i+4] for i in range(0, len(shuffled_ids), 4)]
+        groups = fixed_groups_ids
         
         r32_teams = []
         third_place_pool = []
@@ -249,8 +268,10 @@ def run_1000_tournaments(chaos_factor):
         # --- GROUP STAGE ---
         for group in groups:
             g_stats = {t_id: {"pts": 0, "gd": 0, "gs": 0} for t_id in group}
-            for i in range(4):
-                for j in range(i+1, 4):
+            group_size = len(group)
+            
+            for i in range(group_size):
+                for j in range(i + 1, group_size):
                     tA, tB = group[i], group[j]
                     
                     mu_A = np.exp(intercept_all[s] + atts_all[s, tA] - defs_all[s, tB])
