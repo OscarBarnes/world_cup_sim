@@ -33,7 +33,6 @@ trace = load_model_brain()
 # The exact, immovable index map exported directly from the training notebook
 master_284_teams = ['Abkhazia', 'Afghanistan', 'Albania', 'Alderney', 'Algeria', 'American Samoa', 'Andorra', 'Angola', 'Anguilla', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Artsakh', 'Aruba', 'Australia', 'Austria', 'Aymara', 'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barawa', 'Barbados', 'Basque Country', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bermuda', 'Bhutan', 'Biafra', 'Bolivia', 'Bonaire', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'British Virgin Islands', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cambodia', 'Cameroon', 'Canada', 'Cape Verde', 'Cascadia', 'Catalonia', 'Cayman Islands', 'Central African Republic', 'Chad', 'Chagos Islands', 'Chameria', 'Chile', 'China', 'Colombia', 'Comoros', 'Congo', 'Cook Islands', 'Costa Rica', 'Croatia', 'Cuba', 'Curacao', 'Cyprus', 'Czech Republic', 'DR Congo', 'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic', 'East Turkestan', 'Ecuador', 'Egypt', 'El Salvador', 'Elba Island', 'Ellan Vannin', 'England', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Falkland Islands', 'Faroe Islands', 'Fiji', 'Finland', 'France', 'Franconia', 'French Guiana', 'Frøya', 'Gabon', 'Galicia', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Gibraltar', 'Gozo', 'Greece', 'Greenland', 'Grenada', 'Guadeloupe', 'Guam', 'Guatemala', 'Guernsey', 'Guinea', 'Guinea-Bissau', 'Guyana', 'Haiti', 'Hitra', 'Hmong', 'Honduras', 'Hong Kong', 'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Isle of Man', 'Isle of Wight', 'Israel', 'Italy', 'Ivory Coast', 'Jamaica', 'Japan', 'Jersey', 'Jordan', 'Kabylia', 'Kazakhstan', 'Kenya', 'Kernow', 'Kosovo', 'Kuwait', 'Kyrgyzstan', 'Kárpátalja', 'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Liechtenstein', 'Lithuania', 'Luhansk PR', 'Luxembourg', 'Macau', 'Madagascar', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Mapuche', 'Marshall Islands', 'Martinique', 'Matabeleland', 'Maule Sur', 'Mauritania', 'Mauritius', 'Mayotte', 'Menorca', 'Mexico', 'Moldova', 'Mongolia', 'Montenegro', 'Montserrat', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nepal', 'Netherlands', 'New Caledonia', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Korea', 'North Macedonia', 'Northern Cyprus', 'Northern Ireland', 'Northern Mariana Islands', 'Norway', 'Oman', 'Orkney', 'Padania', 'Pakistan', 'Palestine', 'Panama', 'Panjab', 'Papua New Guinea', 'Paraguay', 'Parishes of Jersey', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Puerto Rico', 'Qatar', 'Raetia', 'Republic of Ireland', 'Romania', 'Russia', 'Rwanda', 'Réunion', 'Saint Barthélemy', 'Saint Helena', 'Saint Kitts and Nevis', 'Saint Lucia', 'Saint Martin', 'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Saudi Arabia', 'Scotland', 'Senegal', 'Serbia', 'Seychelles', 'Shetland', 'Sierra Leone', 'Singapore', 'Sint Maarten', 'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'Somaliland', 'South Africa', 'South Korea', 'South Ossetia', 'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Surrey', 'Sweden', 'Switzerland', 'Syria', 'Székely Land', 'Sápmi', 'São Tomé and Príncipe', 'Tahiti', 'Taiwan', 'Tajikistan', 'Tamil Eelam', 'Tanzania', 'Thailand', 'Tibet', 'Ticino', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Turks and Caicos Islands', 'Tuvalu', 'Two Sicilies', 'Uganda', 'Ukraine', 'United Arab Emirates', 'United Koreans in Japan', 'United States', 'United States Virgin Islands', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Vatican City', 'Venezuela', 'Vietnam', 'Wales', 'West Papua', 'Western Armenia', 'Western Isles', 'Yemen', 'Ynys Môn', 'Yorkshire', 'Yoruba Nation', 'Zambia', 'Zanzibar', 'Zimbabwe', 'Åland Islands']
 
-
 # 📋 THE BOUNCER: The curated 48 World Cup teams for the UI dropdowns
 world_cup_teams = [
     "Spain", "Argentina", "France", "Brazil", "Netherlands", "England", 
@@ -69,6 +68,12 @@ if missing_teams:
 
 # Only include the World Cup teams that actually exist inside your 284 master dataset
 available_teams = [team for team in world_cup_teams if team in master_284_teams]
+
+# Convert team name strings in the fixed groups into numeric indices (0 to 47)
+fixed_groups_ids = [
+    [available_teams.index(team) for team in team_list]
+    for group_name, team_list in tournament_groups_fixed.items()
+]
 
 # ---------------------------------------------------------
 # 2. TITLE & INTRO
@@ -123,19 +128,17 @@ with st.expander("🧠 View the Hierarchical PyMC Model Architecture"):
 
 st.write("---")
 
-# =========================================================
-# 3. THE MATCH SIMULATION ENGINE (Using Index Selection)
-# =========================================================
+# ---------------------------------------------------------
+# 3. INTERACTIVE MATCH SIMULATION
+# ---------------------------------------------------------
 def simulate_match(team_a, team_b, trace, chaos_factor, master_list):
     """
     Looks up the numeric ID for both teams from the master list, 
     extracts their parameters, and simulates 1,000 match outcomes.
     """
-    # Find the hidden numeric index (0 to 283) for both teams
     idx_A = master_list.index(team_a)
     idx_B = master_list.index(team_b)
     
-    # Use .isel() to extract the parameters by their numeric coordinate index
     att_A = trace.posterior["atts"].isel(atts_dim_0=idx_A).values.flatten()
     def_A = trace.posterior["defs"].isel(defs_dim_0=idx_A).values.flatten()
     att_B = trace.posterior["atts"].isel(atts_dim_0=idx_B).values.flatten()
@@ -164,9 +167,6 @@ def simulate_match(team_a, team_b, trace, chaos_factor, master_list):
     
     return goals_A, goals_B
 
-# ---------------------------------------------------------
-# 4. INTERACTIVE ZONE
-# ---------------------------------------------------------
 st.header("🕹️ 3. Test the Multiverse Machine")
 st.markdown("Select any two international sides to run a 1,000-universe simulation.")
 
@@ -180,7 +180,6 @@ chaos_factor = st.slider("Adjust Chaos Level (Overdispersion)", min_value=0.1, m
 
 if st.button("🚀 Run Match Simulation"):
     with st.spinner("Collapsing quantum probabilities..."):
-        # Pass the teams, the trace, the slider value, and the hidden 284 master list map
         goals_A, goals_B = simulate_match(team_a, team_b, trace, chaos_factor, master_284_teams)
     
     # Calculate outcomes across all universes
@@ -205,6 +204,8 @@ if st.button("🚀 Run Match Simulation"):
     The average expected scoreline across the multiverse was **{goals_A.mean():.1f} - {goals_B.mean():.1f}**.
     """)
 
+st.write("---")
+
 # ---------------------------------------------------------
 # 4. THE GRAND TOURNAMENT SIMULATION & MULTIVERSE LOGS
 # ---------------------------------------------------------
@@ -225,12 +226,6 @@ with c1:
     tourney_chaos = st.slider("Tournament Chaos Level (Overdispersion)", min_value=0.1, max_value=2.0, value=1.0, key="grand_chaos")
 with c2:
     st.info("⚡ **Fixed Multiverse Scale:** Set to exactly **1,000 Full Tournaments** for statistically robust survival probabilities.")
-
-# Convert team name strings in the fixed groups into numeric indices (0 to 47)
-fixed_groups_ids = [
-    [available_teams.index(team) for team in team_list]
-    for group_name, team_list in tournament_groups_fixed.items()
-]
 
 def run_1000_tournaments(chaos_factor):
     num_sims = 1000
@@ -259,7 +254,7 @@ def run_1000_tournaments(chaos_factor):
     for sim_id in range(1, num_sims + 1):
         s = np.random.randint(0, num_samples)
         
-        # Shuffle 48 teams into 12 groups of 4
+        # Use official World Cup groups
         groups = fixed_groups_ids
         
         r32_teams = []
