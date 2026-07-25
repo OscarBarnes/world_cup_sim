@@ -47,6 +47,11 @@ world_cup_teams = [
     "Curacao", "Haiti"
 ]
 
+# Check for any team name mismatches between World Cup list and master list
+missing_teams = [team for team in world_cup_teams if team not in master_284_teams]
+if missing_teams:
+    st.warning(f"⚠️ **Name Mismatch Alert:** {len(missing_teams)} team(s) couldn't be found in `master_284_teams`: {missing_teams}. Please check spelling/formatting.")
+
 # Only include the World Cup teams that actually exist inside your 284 master dataset
 available_teams = [team for team in world_cup_teams if team in master_284_teams]
 
