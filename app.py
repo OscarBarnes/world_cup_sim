@@ -6,7 +6,7 @@ import numpy as np
 # ---------------------------------------------------------
 # 0. PAGE CONFIG & DATA LOADING
 # ---------------------------------------------------------
-st.set_page_config(page_title="The Multiverse Cup", page_icon="🏆", layout="centered")
+st.set_page_config(page_title="2026 FIFA World Cup Simulation", page_icon="🏆", layout="centered")
 
 @st.cache_resource
 def load_model_brain():
@@ -78,19 +78,16 @@ fixed_groups_ids = [
 # ---------------------------------------------------------
 # 2. TITLE & INTRO
 # ---------------------------------------------------------
-st.title("🏆 The Multiverse Cup")
-st.subheader("Simulating Football Chaos with Bayesian AI")
+st.title("2026 FIFA World Cup Monte Carlo Simulation")
+st.caption("Simulating 1,000 Parallel World Cup Realities using Bayesian Statistics")
 
 st.markdown("""
-Football is inherently chaotic. We've all seen absolute certainties collapse into shocking 
-90th-minute upsets. Standard sports statistics usually look at simple historical averages, 
-but they fail to capture the sheer unpredictability of the sport. 
+Football is truly chaotic. We’ve all seen huge shocking upsets completed in the last few minutes, like Paraguay stunning Germany to progress to the round of 16. Because hitting the post or 90th minute red cards can alter the score, predicting the scoreline or picking the tournament winner is almost impossible. Instead of looking at a single guess, building a model to map out the possibilities and unexpected shocks is much more interesting, we can use probabilities to study the chaos.
 
-To solve this, I built a predictive system that doesn't just predict *a* single winner. Instead, 
-it simulates **1,000 parallel universes** of a tournament to map out every possible reality.
+To capture the randomness, I built a Bayesian Negative Binomial model trained on weighted historic international match data. The model estimates two traits of every country, their expected goals scored and expected goals conceded. By matching up one team’s attack directly against another’s defence, it calculates goal probabilities and samples realistic match scorelines. Simulate these fixtures thousands of times across the World Cup bracket, we can then look at how the tournament progresses.
 """)
 
-st.write("---")
+st.divider()
 
 st.header("📈 1. Teaching the AI Football History")
 st.markdown("""
