@@ -6,7 +6,7 @@ import numpy as np
 # ---------------------------------------------------------
 # 0. PAGE CONFIG & DATA LOADING
 # ---------------------------------------------------------
-st.set_page_config(page_title="2026 FIFA World Cup Simulation", page_icon="🏆", layout="centered")
+st.set_page_config(page_title="2026 FIFA World Cup Simulation", layout="centered")
 
 @st.cache_resource
 def load_model_brain():
