@@ -400,7 +400,7 @@ if st.button("🚀 Run Match Simulation"):
     pct_B = (wins_B / 1000) * 100
     pct_draw = (draws / 1000) * 100
     
-    st.write(f"### 📊 Simulation Results: {team_a} vs {team_b}")
+    st.write(f"### Simulation Results: {team_a} vs {team_b}")
     
     m1, m2, m3 = st.columns(3)
     m1.metric(label=f"🏆 {team_a} Win Probability", value=f"{pct_A:.1f}%")
@@ -423,16 +423,16 @@ st.header("The Grand Tournament Engine")
 st.markdown(r"""
 Scaling up from single-match predictions, this engine simulates **1,000 complete 2026 World Cup tournaments** (104,000 total matches) across the official 48-team structure. 
 
-#### 📖 How to Interpret the Output:
-* **1. The World Cup Survival Matrix:** Displays each nation's statistical probability (%) of reaching each progressive milestone—from surviving the group stage (Round of 32) all the way to lifting the trophy.
-* **2. Multiverse Shockers:** Highlights notable "giant-killing" upsets where lower-ranked underdogs knocked out elite powerhouses in elimination ties across the simulated realities.
-* **3. High-Scoring Thrillers:** Showcases extreme, high-entropy "tail events"—the wildest, highest-scoring goal-fests recorded across all 100,000+ matches.
+#### How to Interpret the Output:
+* **1. The World Cup Survival Matrix:** Displays each nation's statistical probability (%) of reaching each progressive milestone, from surviving the group stage (Round of 32) all the way to lifting the trophy.
+* **2. Multiverse Shockers:** Highlights notable upsets where lower-ranked underdogs knocked out higher ranked teams in elimination ties across the simulated realities.
+* **3. High-Scoring Thrillers:** Showcases extreme, random "tail events", the wildest, highest-scoring goal-fests recorded across all 100,000+ matches.
 
-Adjust the chaos level below and launch the 1,000-universe simulation!
+Adjust the chaos level below and launch the 1,000 simulations!
 """)
 
 # Setup simulation parameters
-st.subheader("⚙️ Simulation Settings")
+st.subheader("Simulation Settings")
 c1, c2 = st.columns(2)
 with c1:
     tourney_chaos = st.slider("Tournament Chaos Level (Overdispersion)", min_value=0.1, max_value=2.0, value=1.0, key="grand_chaos")
@@ -655,14 +655,14 @@ def run_1000_tournaments(chaos_factor):
     return df_matrix, df_upsets, df_thrillers
 
 # --- TRIGGER BUTTON & DISPLAY ---
-if st.button("🚀 Run 1,000 Multiverse Simulations"):
-    with st.spinner("Simulating 1,000 full tournament brackets across parallel dimensions..."):
+if st.button("Run 1,000 Simulations"):
+    with st.spinner("Simulating 1,000 full tournament brackets across parallel realities..."):
         df_matrix, df_upsets, df_thrillers = run_1000_tournaments(tourney_chaos)
         
     st.write("---")
     
     # 1. SURVIVAL MATRIX DISPLAY
-    st.subheader("🏆 1. The World Cup Survival Matrix")
+    st.subheader("1. The World Cup Survival Matrix")
     st.markdown("Percentage chance of each country reaching each progressive milestone across 1,000 realities:")
     st.dataframe(
         df_matrix.style.format({
@@ -679,7 +679,7 @@ if st.button("🚀 Run 1,000 Multiverse Simulations"):
 
     # 2. DRAMATIC UPSETS LOG DISPLAY
     st.write("---")
-    st.subheader("⚡ 2. Multiverse Shockers: Major Knockout Upsets")
+    st.subheader("2. Simulated Shockers: Major Knockout Upsets")
     st.markdown("Notable instances where a lower-ranked team defeated an elite favorite in a knockout tie:")
     if not df_upsets.empty:
         st.dataframe(df_upsets, use_container_width=True)
@@ -688,7 +688,7 @@ if st.button("🚀 Run 1,000 Multiverse Simulations"):
 
     # 3. HIGH SCORING THRILLERS LOG DISPLAY
     st.write("---")
-    st.subheader("🔥 3. High-Scoring Multiverse Thrillers")
+    st.subheader("3. High-Scoring Thrillers")
     st.markdown("A sample of the highest scoring, wild goalfests recorded during the 100,000+ total matches:")
     if not df_thrillers.empty:
         st.dataframe(df_thrillers, use_container_width=True)
