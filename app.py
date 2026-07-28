@@ -425,7 +425,7 @@ Scaling up from single-match predictions, this engine simulates **1,000 complete
 
 #### How to Interpret the Output:
 * **1. The World Cup Survival Matrix:** Displays each nation's statistical probability (%) of reaching each progressive milestone, from surviving the group stage (Round of 32) all the way to lifting the trophy.
-* **2. Multiverse Shockers:** Highlights notable upsets where lower-ranked underdogs knocked out higher ranked teams in elimination ties across the simulated realities.
+* **2. Simulated Shockers:** Highlights notable upsets where lower-ranked underdogs knocked out higher ranked teams in elimination ties across the simulated realities.
 * **3. High-Scoring Thrillers:** Showcases extreme, random "tail events", the wildest, highest-scoring goal-fests recorded across all 100,000+ matches.
 
 Adjust the chaos level below and launch the 1,000 simulations!
@@ -679,7 +679,7 @@ if st.button("🚀 Run 1,000 Simulations"):
 
     # 2. DRAMATIC UPSETS LOG DISPLAY
     st.write("---")
-    st.subheader("2. Simulated Shockers: Major Knockout Upsets")
+    st.subheader("2. Simulated Shockers")
     st.markdown("Notable instances where a lower-ranked team defeated an elite favorite in a knockout tie:")
     if not df_upsets.empty:
         st.dataframe(df_upsets, use_container_width=True)
