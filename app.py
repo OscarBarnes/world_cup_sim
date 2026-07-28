@@ -335,7 +335,6 @@ with st.expander("Penalty Shootout Engine", expanded=False):
 
     $$P(\text{Shootout Win}) = \frac{\text{Wins} + \alpha}{\text{Total Shootouts} + 2\alpha}$$
 
-    #### How $\alpha = 4$ Regulates Small Samples:
     * **Zero Historical Data:** A team with 0 shootout appearances since 2016 receives:
       $$P(\text{Win}) = \frac{0 + 4}{0 + 8} = 50.0\% \quad \text{(Sinks back to neutral baseline)}$$
     * **Small Sample (e.g., 3 Wins in 3 Shootouts):** Instead of an unrealistic $100\%$, the probability is conservatively smoothed:
