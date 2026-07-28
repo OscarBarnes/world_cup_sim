@@ -103,7 +103,7 @@ Here is the step-by-step statistical pipeline that turns raw scorelines into tou
 # ---------------------------------------------------------
 # DATA PREPROCESSING & WEIGHTING SECTION
 # ---------------------------------------------------------
-with st.expander("1. Data Preprocessing & Weighting", expanded=True):
+with st.expander("1. Data Preprocessing & Weighting", expanded=False):
     st.markdown(r"""
     The raw historical match dataset was obtained from [Kaggle's International Football Results (1872–Present)](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017). 
     
