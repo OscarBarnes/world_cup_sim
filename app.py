@@ -82,7 +82,7 @@ st.title("2026 FIFA World Cup Monte Carlo Simulation")
 st.caption("Simulating 1,000 Parallel World Cup Realities using Bayesian Statistics")
 
 st.markdown("""
-Football is truly chaotic. We’ve all seen huge shocking upsets completed in the last few minutes, like Paraguay stunning Germany to progress to the round of 16. Because hitting the post or 90th minute red cards can alter the score, predicting the scoreline or picking the tournament winner is almost impossible. Instead of looking at a single guess, building a model to map out the possibilities and unexpected shocks is much more interesting, we can use probabilities to study the chaos.
+Football is chaotic. We’ve all seen huge shocking upsets completed in the last few minutes, like Paraguay stunning Germany to progress to the round of 16. Because hitting the post or 90th minute red cards can alter the score, predicting the scoreline or picking the tournament winner is almost impossible. Instead of looking at a single guess, building a model to map out the possibilities and unexpected shocks is much more interesting, we can use probabilities to study the chaos.
 
 To capture the randomness, I built a Bayesian Negative Binomial model trained on weighted historic international match data. The model estimates two traits of every country, their expected goals scored and expected goals conceded. By matching up one team’s attack directly against another’s defence, it calculates goal probabilities and samples realistic match scorelines. Simulate these fixtures thousands of times across the World Cup bracket, we can then look at how the tournament progresses.
 """)
