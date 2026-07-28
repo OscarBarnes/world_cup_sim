@@ -712,3 +712,63 @@ if st.button("🚀 Run 1,000 Simulations"):
         st.dataframe(df_thrillers, use_container_width=True)
     else:
         st.info("No extreme thrillers met the score threshold in this run.")
+
+# ---------------------------------------------------------
+# 6. KEY FINDINGS & MULTIVERSE INSIGHTS
+# ---------------------------------------------------------
+st.write("---")
+st.header("Key Findings & Insights")
+
+st.markdown("""
+After simulating thousands of individual match outcomes and **1,000 complete World Cup tournaments**, several clear statistical insights emerge regarding how Bayesian modeling interprets team strengths, match variance, and single-elimination tournament dynamics.
+""")
+
+# 1. MODEL PARAMETERS
+with st.expander("1. Global Model Parameters & Baseline Scoring", expanded=False):
+    st.markdown(r"""
+    The learned posterior parameters from our hierarchical model establish the global baselines for international football:
+
+    * **Global Baseline (`intercept` = 0.17):** Passing the intercept through the exponential link function yields $\exp(0.17) \approx 1.19$ goals. In a neutral-venue match between two completely average international sides (0.0 rating), each team averages approximately **1.19 expected goals**.
+    * **Home Advantage (`home_adv` = 0.306):** Playing on home soil provides a $\exp(0.306) \approx 1.36$ multiplier—a **+36% boost** in expected goal generation. This parameter is masked to $0$ during World Cup simulations to represent neutral venues.
+    * **Overdispersion ($\alpha_{\text{home}} \approx 4.80$, $\alpha_{\text{away}} \approx 4.03$):** Controls goal-scoring volatility beyond a standard Poisson distribution, enabling realistic draw frequencies and blowout scorelines.
+    """)
+
+# 2. LATENT TEAM RATINGS & MOROCCO
+with st.expander("2. Latent Team Ratings & The 'Morocco Anomaly'", expanded=False):
+    st.markdown(r"""
+    Decomposing match results into latent attacking ($\text{att}_i$) and defensive ($\text{def}_i$) ratings reveals two distinct tactical profiles across top nations:
+
+    #### Elite Attackers vs. Defensive Powerhouses
+    * **Spain (#1 Attack: +0.460):** Holds the world's highest attacking rating, followed closely by **Germany (+0.456)**, **Netherlands (+0.454)**, and **Norway (+0.440)**.
+    * **Morocco (#1 Defense: +0.506):** Boasts the single strongest defensive rating globally, driven by their historic 2022 World Cup semi-final run and recent continental AFCON dominance, followed by **Argentina (+0.453)** and **England (+0.413)**.
+
+    #### 🛡️ Why Defense Drives Tournament Survival
+    In single-elimination knockout brackets, defensive solidity acts as a powerful shield against variance. While high-scoring teams can suffer an off-night, defensively elite sides like **Morocco**, **Uruguay**, or **Ecuador** consistently suppress opponent scoring rates. This forces low-scoring ties or narrow **1–0** victories, providing a much higher floor for reaching deep knockout rounds (Quarterfinals and Semifinals).
+    """)
+
+# 3. FAVORITE'S PARADOX & UNDERDOG GLASS CEILING
+with st.expander("3. Tournament Realities: Favorites vs. Underdogs", expanded=False):
+    st.markdown(r"""
+    #### The Favorite's Paradox
+    Despite boasting the **#1 Attack** and **#4 Defense**, actual tournament winners like Spain rarely exceed a **15–20% overall title probability** across 1,000 simulations. 
+
+    This illustrates the **compounding risk** of single-elimination formats. Winning a 48-team World Cup requires surviving **6 consecutive knockout matches** after the group stage. Even if an elite favorite holds a dominant **75% win probability** in any given match, the joint probability of surviving six straight elimination ties is:
+
+    $$P(\text{Champion}) = (0.75)^6 \approx 17.8\%$$
+
+    Knockout brackets function as high-variance filters where top favorites on paper frequently succumb to single-match entropy before reaching the final.
+
+    #### The Underdog Glass Ceiling
+    Conversely, while lower-ranked underdogs regularly pull off Round of 32 upsets in individual realities (e.g., Paraguay or DR Congo), **no low-tier underdog wins the trophy** across 1,000 tournament simulations. While an underdog might have a 20% chance of pulling off one upset, their cumulative probability of winning six straight knockout games against elite opposition is virtually zero ($(0.20)^6 \approx 0.0064\%$). 
+
+    Over 1,000 runs, the **Law of Large Numbers** asserts itself: individual matches are chaotic, but the ultimate champion is almost always drawn from the top-tier cluster of elite nations.
+    """)
+
+# 4. NEGATIVE BINOMIAL VARIANCE & TAIL EVENTS
+with st.expander("4. Negative Binomial Variance & Tail Events", expanded=False):
+    st.markdown(r"""
+    Upgrading from a standard Poisson distribution to a **Negative Binomial distribution** ($\text{Variance} = \theta + \frac{\theta^2}{\alpha}$) fundamentally improves tournament realism:
+
+    * **Multiverse Shockers (Upsets):** Inflated goal variance allows underdogs to hold heavyweights to low-scoring draws and win via simulated penalty shootouts.
+    * **High-Scoring Thrillers:** The expanded tail of the distribution accurately models extreme high-entropy matches (such as 7+ goal thrillers), capturing real-world scenarios like early red cards, tactical meltdowns, or late-game desperation.
+    """)
