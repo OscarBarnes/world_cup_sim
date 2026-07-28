@@ -6,3 +6,4 @@ xarray
 netcdf4
 h5netcdf
 scipy
+plotly
