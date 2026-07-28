@@ -321,6 +321,40 @@ with st.expander(
     By repeating this process **1,000 times**, we create 1,000 parallel World Cup realities. Aggregating the outcomes across all runs converts unpredictable single-match chaos into reliable, probabilistic forecasts for every country's chances of lifting the trophy.
     """)
 
+# ---------------------------------------------------------
+# PENALTY SHOOTOUT ENGINE SECTION
+# ---------------------------------------------------------
+with st.expander("Penalty Shootout Engine", expanded=False):
+    st.markdown(r"""
+    Knockout matches that end in a draw cannot remain tied. While many traditional simulators treat penalty shootouts as a naive $50/50$ coin toss, historical data demonstrates that certain national teams exhibit consistent shoot-out performance due to tactical culture, goalkeeping pedigree, and pressure management.
+
+    However, relying strictly on raw historical win rates introduces severe **small-sample size bias** (e.g., a nation with a $1/1$ shootout record would be assigned an unearned $100\%$ win probability).
+
+    ---
+
+    ### 1. The Mathematical Solution: Bayesian Laplace Smoothing
+    To resolve this, we filter international shootout data from **2016 to the present** (capturing modern squad eras) and apply **Laplace (Bayesian) Smoothing** with a prior weight of $\alpha = 4$:
+
+    $$P(\text{Shootout Win}) = \frac{\text{Wins} + \alpha}{\text{Total Shootouts} + 2\alpha}$$
+
+    #### How $\alpha = 4$ Regulates Small Samples:
+    * **Zero Historical Data:** A team with 0 shootout appearances since 2016 receives:
+      $$P(\text{Win}) = \frac{0 + 4}{0 + 8} = 50.0\% \quad \text{(Sinks back to neutral baseline)}$$
+    * **Small Sample (e.g., 3 Wins in 3 Shootouts):** Instead of an unrealistic $100\%$, the probability is conservatively smoothed:
+      $$P(\text{Win}) = \frac{3 + 4}{3 + 8} = \frac{7}{11} \approx 63.6\%$$
+    * **Large Sample (e.g., 8 Wins in 10 Shootouts):** As sample size grows, real historical dominance overrides the prior:
+      $$P(\text{Win}) = \frac{8 + 4}{10 + 8} = \frac{12}{18} \approx 66.7\%$$
+
+    ---
+
+    ### 2. Match-Up Normalization in Knockouts
+    When two teams ($A$ and $B$) meet in a knockout tie ending in a draw, their smoothed probabilities ($P_A$ and $P_B$) are normalized against each other to determine the final shootout outcome:
+
+    $$P(\text{Team A Wins Shootout}) = \frac{P_A}{P_A + P_B}$$
+
+    This ensures that when two historically elite shootout teams meet, the tie-breaker scales back toward a balanced contest while still respecting subtle historical edges.
+    """)
+
 st.divider()
 
 # ---------------------------------------------------------
@@ -742,8 +776,8 @@ with st.expander("2. Latent Team Ratings & The 'Morocco Anomaly'", expanded=Fals
     * **Spain (#1 Attack: +0.460):** Holds the world's highest attacking rating, followed closely by **Germany (+0.456)**, **Netherlands (+0.454)**, and **Norway (+0.440)**.
     * **Morocco (#1 Defense: +0.506):** Boasts the single strongest defensive rating globally, driven by their historic 2022 World Cup semi-final run and recent continental AFCON dominance, followed by **Argentina (+0.453)** and **England (+0.413)**.
 
-    #### 🛡️ Why Defense Drives Tournament Survival
-    In single-elimination knockout brackets, defensive solidity acts as a powerful shield against variance. While high-scoring teams can suffer an off-night, defensively elite sides like **Morocco**, **Uruguay**, or **Ecuador** consistently suppress opponent scoring rates. This forces low-scoring ties or narrow **1–0** victories, providing a much higher floor for reaching deep knockout rounds (Quarterfinals and Semifinals).
+    #### Why Defense Drives Tournament Survival
+    In single-elimination knockout brackets, defensive solidity acts as a powerful shield against variance. While high-scoring teams can suffer an off-night, defensively elite sides like **Morocco**, **Spain**, or **Ecuador** consistently suppress opponent scoring rates. This forces low-scoring ties or narrow **1–0** victories, providing a much higher floor for reaching deep knockout rounds (Quarterfinals and Semifinals).
     """)
 
 # 3. FAVORITE'S PARADOX & UNDERDOG GLASS CEILING
