@@ -809,34 +809,25 @@ st.write("---")
 st.header("Project Source Code & Reproducibility")
 
 st.markdown("""
-Transparency and statistical reproducibility are central to this project. All data cleaning, Bayesian model training, MCMC diagnostics, and simulation scripts are open-source and publicly accessible.
+Transparency and statistical reproducibility are central to this project. All data preprocessing pipelines, Bayesian model specifications, MCMC diagnostic checks, and tournament simulation scripts are open-source and publicly hosted on GitHub.
 """)
 
-col1, col2 = st.columns(2)
+# Callout box for GitHub access
+st.info("### View Source Code on GitHub")
+st.markdown("""
+You can inspect the full codebase—including the complete `model_training.ipynb` notebook, raw CSV datasets, MCMC trace file, and Streamlit application scripts—directly on GitHub:
 
-with col1:
-    st.info("### GitHub Repository")
-    st.markdown("""
-    Explore the full codebase, including the Streamlit application, raw CSV datasets, and posterior NetCDF trace files.
-    
-    [![GitHub Repo](https://img.shields.io/badge/GitHub-View_Repository-181717?style=for-the-badge&logo=github)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
-    """)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-View_Repository-181717?style=for-the-badge&logo=github)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
+""")
 
-with col2:
-    st.success("### Open Notebook in Colab")
+# Expander detailing what is inside the notebook
+with st.expander("🔍 What is inside the `model_training.ipynb` notebook?"):
     st.markdown("""
-    Run the original model-training notebook directly in your browser with GPU/TPU acceleration.
+    The Jupyter Notebook provides a step-by-step walk-through of the entire analytical pipeline:
     
-    [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USERNAME/YOUR_REPO_NAME/blob/main/model_training.ipynb)
-    """)
-
-with st.expander("Inside the Jupyter Notebook"):
-    st.markdown("""
-    The `model_training.ipynb` notebook contains the full step-by-step pipeline:
-    
-    1. **Data Preprocessing:** Scraping international match results and calculating dynamic venue masks.
-    2. **Hierarchical Model Specification:** Defining the PyMC Negative Binomial model ($\beta_0$, $\text{att}_i$, $\text{def}_i$, $\alpha$).
-    3. **MCMC Sampling:** 4 chains with 2,000 tune + 2,000 draw samples per chain.
-    4. **Convergence Diagnostics:** $\hat{R}$ metrics, Effective Sample Size ($ESS$), and Energy Energy plots.
-    5. **Penalty Shootout Pipeline:** Laplace smoothing calculation for all international teams.
+    * **1. Data Preprocessing & Weighting:** Filtering post-2018 international fixtures and computing dynamic tournament stature and exponential recency weights ($\Delta t / 730$).
+    * **2. Hierarchical Model Construction:** Defining non-centered latent team attack ($\text{att}_i$) and defense ($\text{def}_i$) parameters, sum-to-zero constraints, global intercept ($\beta_0$), and Negative Binomial overdispersion ($\alpha$) in PyMC.
+    * **3. MCMC Sampling & NetCDF Export:** Running Hamiltonian Monte Carlo (NUTS) sampling across multiple chains and exporting the posterior trace (`nb_trace.nc`).
+    * **4. Diagnostic Validation:** Checking convergence via Gelman-Rubin ($\hat{R} = 1.00$), Effective Sample Size (ESS), zero divergent transitions check, and posterior predictive checks.
+    * **5. Laplace Penalty Smoothing:** Calculating empirical shootout probabilities using historical penalty data smoothed with prior weight $\alpha = 4$.
     """)
