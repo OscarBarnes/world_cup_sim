@@ -1,7 +1,10 @@
-import streamlit as st
-import pandas as pd
 import arviz as az
 import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from scipy.stats import nbinom, poisson
+import streamlit as st
+
 
 # ---------------------------------------------------------
 # 0. PAGE CONFIG & DATA LOADING
@@ -176,6 +179,101 @@ with st.expander("2. Estimating Team Traits & Expected Goals", expanded=False):
 
     Notice that $\theta$ is a continuous decimal, it does not tell us the probability of exact scorelines like $2\text{--}0$ or $1\text{--}1$ yet. To convert this expected average into discrete integer goals, we pass $\theta$ into a goal probability distribution in the next step.
     """)
+
+# ---------------------------------------------------------
+# POISSON VS NEGATIVE BINOMIAL
+# ---------------------------------------------------------
+with st.expander(
+    "3. Goal Distributions: Upgrading Poisson to Negative Binomial",
+    expanded=False,
+):
+    st.markdown(r"""
+    Now that the expected goal rate ($\theta$) for each team is calculated, a probability distribution is used to translate this continuous decimal (e.g., $\theta = 1.64$ goals) into exact, discrete scoreline probabilities ($0, 1, 2, 3, \dots$ goals).
+
+    #### 1. The Baseline: Poisson Distribution
+    Initially, the model uses a standard **Poisson distribution** as the goal translator. Poisson is widely used in sports modeling for rare discrete events and relies on a single parameter: $\theta$.
+
+    The defining mathematical property of the Poisson distribution is **equidispersion**, where the variance equal the mean:
+
+    $$\text{Variance} = \text{Mean} = \theta$$
+
+    ##### What does a Variance of 1.64 actually mean?
+    If a team has an expected goal rate of $\theta = 1.64$, a Poisson model strictly fixes the goal spread around $1.64$ (a standard deviation of $\sqrt{1.64} \approx 1.28$ goals). Under this rigid formula:
+    * The probability of $1$ goal is locked at $\approx 31.8\%$.
+    * High-scoring blowouts ($4+$ goals) are capped at $\approx 8.4\%$.
+
+    ##### The Overdispersion Problem ($\text{Variance} > \text{Mean}$)
+    In reality, World Cup matches feature much higher variance (**overdispersion**). Events like early red cards, tactical collapses, high-pressure shootouts, or stubborn $0\text{--}0$ stalemates occur far more often in international football—especially when underdogs like Cape Verde or Curaçao take on tactical powerhouses like Germany or Spain. 
+
+    Because Poisson assumes goals happen at a completely constant, independent rate across 90 minutes, it fails to account for these chaotic match dynamics.
+
+    #### 2. The Solution: Negative Binomial Distribution
+    To fix this issue, the model upgrades to a **Negative Binomial distribution**. It introduces two global overdispersion parameters ($\alpha_{\text{home}}$ and $\alpha_{\text{away}}$), expanding the variance formula to:
+
+    $$\text{Variance} = \theta + \frac{\theta^2}{\alpha}$$
+
+    Here, $\alpha$ acts as a **chaos regulator**:
+    * **As $\alpha \to \infty$:** The extra variance term ($\frac{\theta^2}{\alpha}$) vanishes, and the model behaves like a standard Poisson distribution.
+    * **As $\alpha$ gets smaller:** It inflates the variance relative to the mean, giving the model the flexibility to assign realistic probabilities to both stubborn $0\text{--}0$ clean sheets and wild, unexpected blowouts.
+    """)
+
+    st.subheader("📊 Visualising the Distribution Shift")
+
+    # Generate distribution probabilities for theta = 1.64
+    goals = np.arange(0, 8)
+    theta_val = 1.64
+    alpha_val = 2.0  # High overdispersion for demonstration
+
+    # Poisson probabilities
+    poisson_pmf = poisson.pmf(goals, theta_val)
+
+    # Negative Binomial conversion (scipy uses n and p)
+    # n = alpha, p = alpha / (alpha + mu)
+    p_param = alpha_val / (alpha_val + theta_val)
+    nb_pmf = nbinom.pmf(goals, alpha_val, p_param)
+
+    # Create Plotly Comparison Figure
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=goals,
+            y=poisson_pmf,
+            name="Poisson (Variance = 1.64)",
+            marker_color="#1f77b4",
+            opacity=0.75,
+        )
+    )
+    fig.add_trace(
+        go.Bar(
+            x=goals,
+            y=nb_pmf,
+            name="Negative Binomial (Variance = 2.98, α=2.0)",
+            marker_color="#ff7f0e",
+            opacity=0.75,
+        )
+    )
+
+    fig.update_layout(
+        title=f"Goal Probability Comparison for Expected Goals (θ) = {theta_val}",
+        xaxis_title="Goals Scored in Match",
+        yaxis_title="Probability",
+        barmode="group",
+        legend=dict(x=0.55, y=0.98),
+        template="plotly_white",
+        height=400,
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown(r"""
+    > 💡 **Notice the shift in the graph above:** The Negative Binomial distribution (orange) lowers the peak around $1$ and $2$ goals and shifts probability mass into the **tails**—increasing the likelihood of both **$0$ goals** (stalemates) and **$4+$ goals** (blowouts).
+
+    #### 3. MCMC Sampling & Posterior Uncertainty (`nb_trace.nc`)
+    Rather than picking single fixed estimates for team ratings ($\text{att}_i, \text{def}_i$) or overdispersion ($\alpha$), the model uses **Markov Chain Monte Carlo (MCMC)** sampling in PyMC. 
+
+    MCMC samples thousands of plausible parameter combinations from the data, saving them into a trace file (`nb_trace.nc`). When simulating matches in Section 4, the model doesn't just rely on single point averages—it samples directly from this full parameter cloud, preserving true statistical uncertainty across every simulated World Cup fixture.
+    """)
+
 
 # ---------------------------------------------------------
 # 3. INTERACTIVE MATCH SIMULATION
