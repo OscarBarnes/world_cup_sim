@@ -322,7 +322,7 @@ with st.expander(
     """)
 
 # ---------------------------------------------------------
-# 3. INTERACTIVE MATCH SIMULATION
+# 4. INTERACTIVE MATCH SIMULATION
 # ---------------------------------------------------------
 def simulate_match(team_a, team_b, trace, chaos_factor, master_list):
     """
@@ -360,8 +360,22 @@ def simulate_match(team_a, team_b, trace, chaos_factor, master_list):
     
     return goals_A, goals_B
 
-st.header("🕹️ 3. Test the Multiverse Machine")
-st.markdown("Select any two international sides to run a 1,000-universe simulation.")
+# ---------------------------------------------------------
+# MATCH SIMULATOR SECTION
+# ---------------------------------------------------------
+st.header("Test the Match Simulation!")
+
+st.markdown(r"""
+Before simulating the entire 2026 World Cup tournament, use this single-match sandbox to test how two nations match up head-to-head across **1,000 parallel match realities**.
+
+#### Understanding the Chaos Level Slider ($\alpha$)
+The **Chaos Level** slider directly controls the **overdispersion parameter ($\alpha$)** in the Negative Binomial model:
+
+* **High Chaos ($\text{Smaller } \alpha$):** Increases match variance. This simulates high-entropy tournament conditions where red cards, early goals, and tactical collapses lead to shock upsets, high-scoring thrillers, or $0\text{--}0$ stalemates.
+* **Low Chaos ($\text{Larger } \alpha$):** Suppresses match variance toward standard Poisson behavior ($\text{Variance} \approx \text{Mean}$). Games play out strictly according to baseline team quality, making favorites significantly more dominant.
+
+Select your teams, adjust the overdispersion, and launch the multiverse simulation below!
+""")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -400,9 +414,9 @@ if st.button("🚀 Run Match Simulation"):
 st.write("---")
 
 # ---------------------------------------------------------
-# 4. THE GRAND TOURNAMENT SIMULATION & MULTIVERSE LOGS
+# 5. THE GRAND TOURNAMENT SIMULATION & MULTIVERSE LOGS
 # ---------------------------------------------------------
-st.header("📊 4. The Grand Tournament Multiverse Engine")
+st.header("The Grand Tournament Engine")
 
 st.markdown("""
 Welcome to the main event. While single-match predictions are useful, tournament football introduces cumulative fatigue, 
