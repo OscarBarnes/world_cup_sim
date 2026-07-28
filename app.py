@@ -110,7 +110,7 @@ with st.expander("1. Data Preprocessing & Weighting", expanded=False):
     st.markdown(r"""
     The raw historical match dataset was obtained from [Kaggle's International Football Results (1872–Present)](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017). 
     
-    To ensure team strength estimates reflect modern squad quality rather than outdated tactical eras or retired generations of players, the dataset was filtered to matches played from **2018 onwards**. The data was reduced to key features: match date, home team, away team, home/away scores, tournament type, and neutral venue indicators. Numeric team IDs were created across all 284 international sides for efficient array indexing inside PyMC.
+    To ensure team strength estimates reflect modern squad quality rather than outdated tactical eras or retired generations of players, the dataset was filtered to matches played from **2018 onwards**. The data was reduced to key features: match date, home team, away team, home/away scores, tournament type, and neutral venue indicators. Numeric team IDs were created across all 284 international sides for efficient indexing.
 
     To prevent friendly results or minor tournaments from distorting team ratings, two distinct weighting multipliers were applied to every match:
 
@@ -125,13 +125,13 @@ with st.expander("1. Data Preprocessing & Weighting", expanded=False):
     Where $\Delta t$ represents the number of days elapsed between the match date and the most recent match in the dataset. A denominator of $730$ days ($2\text{ years}$) was chosen because national teams play relatively infrequently (roughly 10–12 matches per year). Dividing by 730 flattens the decay curve smoothly, preserving sufficient sample size while ensuring modern form dominates.
 
     #### Combined Match Weight ($\bar{W}$)
-    Both weights are multiplied together and normalized relative to the maximum weight:
+    Both weights are multiplied together and normalised relative to the maximum weight:
 
     $$W_{\text{final}} = W_{\text{tournament}} \times W_{\text{recency}}$$
 
     $$\bar{W} = \frac{W_{\text{final}}}{\max(W_{\text{final}})}$$
 
-    This normalized weight ($\bar{W}$) enters the PyMC likelihood function, prioritizing recent, high-stakes competitive matches during Bayesian parameter estimation.
+    This normalised weight ($\bar{W}$) enters the PyMC likelihood function, prioritising recent, high-stakes competitive matches during Bayesian parameter estimation.
     """)
 
 # ---------------------------------------------------------
@@ -141,7 +141,7 @@ with st.expander("2. Estimating Team Traits & Expected Goals", expanded=False):
     st.markdown(r"""
     Before predicting match outcomes, how good each team is at attacking and defending must be quantified. Because a nation's football capability cannot be directly measured, the model treats team strength as latent (hidden) parameters estimated from historical match results.
 
-    #### 1. Dual Team Traits: Attack ($\text{att}_i$) & Defense ($\text{def}_i$)
+    #### 1. Dual Team Traits: Attack ($\text{att}_i$) & Defence ($\text{def}_i$)
     For every nation $i$ across all 284 international sides, the model assigns two distinct traits:
     * **Attacking Strength ($\text{att}_i$):** A team's ability to create and finish scoring chances.
     * **Defensive Solidity ($\text{def}_i$):** A team's ability to suppress and prevent opponent scoring chances.
@@ -193,7 +193,7 @@ with st.expander(
     #### 1. The Baseline: Poisson Distribution
     Initially, the model uses a standard **Poisson distribution** as the goal translator. Poisson is widely used in sports modeling for rare discrete events and relies on a single parameter, $\theta$.
 
-    The defining mathematical property of the Poisson distribution is **equidispersion**, where the variance equals the mean:
+    The defining property of the Poisson distribution is **equidispersion**, where the variance equals the mean:
 
     $$\text{Variance} = \text{Mean} = \theta$$
 
@@ -288,12 +288,12 @@ with st.expander("4. Model Convergence & Diagnostic Validation", expanded=False)
     #### 2. Effective Sample Size ($\text{ESS}_{\text{bulk}}$ & $\text{ESS}_{\text{tail}}$)
     Because MCMC draws are sequentially correlated, the **Effective Sample Size (ESS)** measures the number of truly independent samples obtained from the trace.
     * **Target:** $\text{ESS}_{\text{bulk}} > 400$ per chain.
-    * **Result:** Non-centered parameterisation prevented the sampler from encountering geometric funnel traps, producing high ESS values across latent team traits and allowing reliable estimation of posterior credible intervals.
+    * **Result:** Non-centered parameterisation prevented the sampler from encountering geometric problems, producing high ESS values across latent team traits and allowing reliable estimation of posterior credible intervals.
 
     #### 3. Posterior Predictive Checks (Scoreline Validation)
     To validate model fit against real-world football dynamics, synthetic match datasets were generated from the posterior distribution using `pm.sample_posterior_predictive`. 
     
-    Comparing simulated scorelines against historical ground-truth results confirmed that the Negative Binomial model accurately reproduced observed clean-sheet rates, draw frequencies, and blowout probabilities—validating its readiness for tournament simulation.
+    Comparing simulated scorelines against historical ground-truth results confirmed that the Negative Binomial model accurately reproduced observed clean-sheet rates, draw frequencies, and blowout probabilities, validating its readiness for tournament simulation.
     """)
 
 # ---------------------------------------------------------
@@ -313,7 +313,7 @@ with st.expander(
     #### 2. Executing the Official 2026 FIFA Structure (104 Matches)
     Each tournament run simulates the complete 48-team World Cup structure step-by-step:
 
-    * **Group Stage (72 Matches):** Teams in Groups A through L play a 3-match round-robin. Standings are ranked by **Points $\rightarrow$ Goal Difference $\rightarrow$ Goals Scored**.
+    * **Group Stage (72 Matches):** Teams in Groups A through L play a 3-match round-robin. Standings are ranked by **Points $\rightarrow$ Head-to-Head Record $\rightarrow$ Head-to-Head Goal Difference**.
     * **Wildcard Qualification:** The **12 group winners**, **12 runners-up**, and the **top 8 third-place teams** advance to the Round of 32.
     * **Knockout Bracket (32 Matches):** Teams follow the official FIFA knockout path. Any match ending in a draw is resolved via simulated penalty shootouts.
 
@@ -326,7 +326,7 @@ with st.expander(
 # ---------------------------------------------------------
 with st.expander("6. Penalty Shootout Engine", expanded=False):
     st.markdown(r"""
-    Knockout matches that end in a draw cannot remain tied. While many traditional simulators treat penalty shootouts as a naive $50/50$ coin toss, historical data demonstrates that certain national teams exhibit consistent shoot-out performance due to tactical culture, goalkeeping pedigree, and pressure management.
+    Knockout matches that end in a draw cannot remain tied. While many traditional simulators treat penalty shootouts as a naive $50/50$ coin toss, historical data demonstrates that certain national teams exhibit consistent shoot-out performance due to tactical class, goalkeeping prowess, and pressure management.
 
     However, relying strictly on raw historical win rates introduces severe **small-sample size bias** (e.g., a nation with a $1/1$ shootout record would be assigned an unearned $100\%$ win probability).
 
@@ -343,7 +343,7 @@ with st.expander("6. Penalty Shootout Engine", expanded=False):
       $$P(\text{Win}) = \frac{8 + 4}{10 + 8} = \frac{12}{18} \approx 66.7\%$$
 
     #### 2. Match-Up Normalization in Knockouts
-    When two teams ($A$ and $B$) meet in a knockout tie ending in a draw, their smoothed probabilities ($P_A$ and $P_B$) are normalized against each other to determine the final shootout outcome:
+    When two teams ($A$ and $B$) meet in a knockout tie ending in a draw, their smoothed probabilities ($P_A$ and $P_B$) are normalised against each other to determine the final shootout outcome:
 
     $$P(\text{Team A Wins Shootout}) = \frac{P_A}{P_A + P_B}$$
 
@@ -758,7 +758,7 @@ with st.expander("1. Global Model Parameters & Baseline Scoring", expanded=False
     The learned posterior parameters from our hierarchical model establish the global baselines for international football:
 
     * **Global Baseline (`intercept` = 0.17):** Passing the intercept through the exponential link function yields $\exp(0.17) \approx 1.19$ goals. In a neutral-venue match between two completely average international sides (0.0 rating), each team averages approximately **1.19 expected goals**.
-    * **Home Advantage (`home_adv` = 0.306):** Playing on home soil provides a $\exp(0.306) \approx 1.36$ multiplier—a **+36% boost** in expected goal generation. This parameter is masked to $0$ during World Cup simulations to represent neutral venues.
+    * **Home Advantage (`home_adv` = 0.306):** Playing on home soil provides a $\exp(0.306) \approx 1.36$ multiplier—a **+36% boost** in expected goal generation.
     * **Overdispersion ($\alpha_{\text{home}} \approx 4.80$, $\alpha_{\text{away}} \approx 4.03$):** Controls goal-scoring volatility beyond a standard Poisson distribution, enabling realistic draw frequencies and blowout scorelines.
     """)
 
@@ -779,7 +779,7 @@ with st.expander("2. Latent Team Ratings & The 'Morocco Anomaly'", expanded=Fals
 with st.expander("3. Tournament Realities: Favorites vs. Underdogs", expanded=False):
     st.markdown(r"""
     #### The Favorite's Paradox
-    Despite boasting the **#1 Attack** and **#4 Defense**, actual tournament winners like Spain rarely exceed a **15–20% overall title probability** across 1,000 simulations. 
+    Despite boasting the **#1 Attack** and **#4 Defense**, actual tournament winners Spain rarely exceed a **7-10% overall title probability** across 1,000 simulations. 
 
     This illustrates the **compounding risk** of single-elimination formats. Winning a 48-team World Cup requires surviving **6 consecutive knockout matches** after the group stage. Even if an elite favorite holds a dominant **75% win probability** in any given match, the joint probability of surviving six straight elimination ties is:
 
@@ -788,7 +788,7 @@ with st.expander("3. Tournament Realities: Favorites vs. Underdogs", expanded=Fa
     Knockout brackets function as high-variance filters where top favorites on paper frequently succumb to single-match entropy before reaching the final.
 
     #### The Underdog Glass Ceiling
-    Conversely, while lower-ranked underdogs regularly pull off Round of 32 upsets in individual realities (e.g., Paraguay or DR Congo), **no low-tier underdog wins the trophy** across 1,000 tournament simulations. While an underdog might have a 20% chance of pulling off one upset, their cumulative probability of winning six straight knockout games against elite opposition is virtually zero ($(0.20)^6 \approx 0.0064\%$). 
+    Conversely, while lower-ranked underdogs regularly pull off Round of 32 upsets in individual realities (like Paraguay), **low-tier underdogs very rarely win the trophy** across 1,000 tournament simulations. While an underdog might have a 20% chance of pulling off one upset, their cumulative probability of winning six straight knockout games against elite opposition is virtually zero ($(0.20)^6 \approx 0.0064\%$). 
 
     Over 1,000 runs, the **Law of Large Numbers** asserts itself: individual matches are chaotic, but the ultimate champion is almost always drawn from the top-tier cluster of elite nations.
     """)
@@ -800,4 +800,43 @@ with st.expander("4. Negative Binomial Variance & Tail Events", expanded=False):
 
     * **Multiverse Shockers (Upsets):** Inflated goal variance allows underdogs to hold heavyweights to low-scoring draws and win via simulated penalty shootouts.
     * **High-Scoring Thrillers:** The expanded tail of the distribution accurately models extreme high-entropy matches (such as 7+ goal thrillers), capturing real-world scenarios like early red cards, tactical meltdowns, or late-game desperation.
+    """)
+
+# ---------------------------------------------------------
+# 7. CODE REPOSITORY & REPRODUCIBILITY
+# ---------------------------------------------------------
+st.write("---")
+st.header("Project Source Code & Reproducibility")
+
+st.markdown("""
+Transparency and statistical reproducibility are central to this project. All data cleaning, Bayesian model training, MCMC diagnostics, and simulation scripts are open-source and publicly accessible.
+""")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.info("### GitHub Repository")
+    st.markdown("""
+    Explore the full codebase, including the Streamlit application, raw CSV datasets, and posterior NetCDF trace files.
+    
+    [![GitHub Repo](https://img.shields.io/badge/GitHub-View_Repository-181717?style=for-the-badge&logo=github)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
+    """)
+
+with col2:
+    st.success("### Open Notebook in Colab")
+    st.markdown("""
+    Run the original model-training notebook directly in your browser with GPU/TPU acceleration.
+    
+    [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USERNAME/YOUR_REPO_NAME/blob/main/model_training.ipynb)
+    """)
+
+with st.expander("Inside the Jupyter Notebook"):
+    st.markdown("""
+    The `model_training.ipynb` notebook contains the full step-by-step pipeline:
+    
+    1. **Data Preprocessing:** Scraping international match results and calculating dynamic venue masks.
+    2. **Hierarchical Model Specification:** Defining the PyMC Negative Binomial model ($\beta_0$, $\text{att}_i$, $\text{def}_i$, $\alpha$).
+    3. **MCMC Sampling:** 4 chains with 2,000 tune + 2,000 draw samples per chain.
+    4. **Convergence Diagnostics:** $\hat{R}$ metrics, Effective Sample Size ($ESS$), and Energy Energy plots.
+    5. **Penalty Shootout Pipeline:** Laplace smoothing calculation for all international teams.
     """)
