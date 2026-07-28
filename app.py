@@ -650,19 +650,25 @@ def run_1000_tournaments(chaos_factor):
         
     df_matrix = pd.DataFrame(matrix_records).sort_values(by="Champion %", ascending=False)
     
-    # Process Upsets (take top 10 by biggest rating gap)
+    # Process Upsets: Remove duplicate matchups and randomly sample 10 unique giant-killings
     if upsets:
-        df_upsets = pd.DataFrame(upsets).sort_values(by="Rating Gap", ascending=False).head(10).reset_index(drop=True)
+        df_all_upsets = pd.DataFrame(upsets)
+        # 1. Keep only unique team matchups (no repeating Ecuador vs Norway 5 times)
+        df_unique_upsets = df_all_upsets.drop_duplicates(subset=["Giant Killer", "Fallen Heavyweight"])
+        # 2. Randomly sample up to 10 unique upsets across the multiverse
+        sample_size = min(10, len(df_unique_upsets))
+        df_upsets = df_unique_upsets.sample(n=sample_size).reset_index(drop=True)
     else:
         df_upsets = pd.DataFrame()
         
-    # Process Thrillers (take top 10 by highest total goals)
+    # Process Thrillers: Remove duplicate exact scorelines and randomly sample 10 high-scoring games
     if thrillers:
-        df_thrillers = pd.DataFrame(thrillers).sort_values(by="Total Goals", ascending=False).head(10).reset_index(drop=True)
+        df_all_thrillers = pd.DataFrame(thrillers)
+        df_unique_thrillers = df_all_thrillers.drop_duplicates(subset=["Matchup"])
+        sample_size_t = min(10, len(df_unique_thrillers))
+        df_thrillers = df_unique_thrillers.sample(n=sample_size_t).reset_index(drop=True)
     else:
         df_thrillers = pd.DataFrame()
-    
-    return df_matrix, df_upsets, df_thrillers
     
     return df_matrix, df_upsets, df_thrillers
 
