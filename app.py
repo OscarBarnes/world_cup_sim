@@ -330,9 +330,7 @@ with st.expander("Penalty Shootout Engine", expanded=False):
 
     However, relying strictly on raw historical win rates introduces severe **small-sample size bias** (e.g., a nation with a $1/1$ shootout record would be assigned an unearned $100\%$ win probability).
 
-    ---
-
-    ### 1. The Mathematical Solution: Bayesian Laplace Smoothing
+    #### 1. The Mathematical Solution: Bayesian Laplace Smoothing
     To resolve this, we filter international shootout data from **2016 to the present** (capturing modern squad eras) and apply **Laplace (Bayesian) Smoothing** with a prior weight of $\alpha = 4$:
 
     $$P(\text{Shootout Win}) = \frac{\text{Wins} + \alpha}{\text{Total Shootouts} + 2\alpha}$$
@@ -345,9 +343,7 @@ with st.expander("Penalty Shootout Engine", expanded=False):
     * **Large Sample (e.g., 8 Wins in 10 Shootouts):** As sample size grows, real historical dominance overrides the prior:
       $$P(\text{Win}) = \frac{8 + 4}{10 + 8} = \frac{12}{18} \approx 66.7\%$$
 
-    ---
-
-    ### 2. Match-Up Normalization in Knockouts
+    #### 2. Match-Up Normalization in Knockouts
     When two teams ($A$ and $B$) meet in a knockout tie ending in a draw, their smoothed probabilities ($P_A$ and $P_B$) are normalized against each other to determine the final shootout outcome:
 
     $$P(\text{Team A Wins Shootout}) = \frac{P_A}{P_A + P_B}$$
