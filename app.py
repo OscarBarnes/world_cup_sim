@@ -95,7 +95,7 @@ st.divider()
 st.header("How the Statistical Engine Works")
 
 st.markdown("""
-To simulate matches realistically, we built a **Hierarchical Bayesian Negative Binomial Model** trained on historical international match data. 
+To simulate matches realistically, I built a **Hierarchical Bayesian Negative Binomial Model** trained on historical international match data. 
 
 Here is the step-by-step statistical pipeline that turns raw scorelines into tournament probabilities:
 """)
@@ -131,7 +131,59 @@ with st.expander("1. Data Preprocessing & Weighting", expanded=True):
     This normalized weight ($\bar{W}$) enters the PyMC likelihood function, prioritizing recent, high-stakes competitive matches during Bayesian parameter estimation.
     """)
 
+# ---------------------------------------------------------
+# ESTIMATING TEAM TRAITS & EXPECTED GOALS
+# ---------------------------------------------------------
+with st.expander("2. Estimating Team Traits & Expected Goals", expanded=False):
+    st.markdown(r"""
+    Before predicting match outcomes, we must first quantify how good each team is at attacking and defending. Because a nation's true football capability cannot be directly measured, the model treats team strength as **latent (hidden) parameters** estimated from historical match results.
 
+    ---
+
+    ### 1. Dual Team Traits: Attack ($\text{att}_i$) & Defense ($\text{def}_i$)
+    For every nation $i$ across all 284 international sides, the model assigns two distinct traits:
+    * **Attacking Strength ($\text{att}_i$):** Quantifies a team's ability to create and finish scoring chances.
+    * **Defensive Solidity ($\text{def}_i$):** Quantifies a team's ability to suppress and prevent opponent scoring chances.
+
+    #### The Sum-to-Zero Constraint
+    To ensure mathematical identifiability (so the model doesn't endlessly shift all ratings up or down together), both trait sets are forced to sum to zero across all 284 teams:
+
+    $$\sum_{i=1}^{284} \text{att}_i = 0 \quad \text{and} \quad \sum_{i=1}^{284} \text{def}_i = 0$$
+
+    > 💡 **In Plain Terms:** A rating of $0.0$ represents a completely average international side. A positive attack rating ($\text{att}_i > 0$) indicates an above-average attack, while a positive defense rating ($\text{def}_i > 0$) means an above-average defense that reduces opponent scoring.
+
+    ---
+
+    ### 2. Non-Centered Parameterization Architecture
+    Estimating parameters for 284 teams simultaneously can cause MCMC samplers to get stuck in mathematical traps known as *Neal's Funnel*. To avoid this, the model uses a **non-centered architecture**:
+
+    $$\text{atts\_raw} = \text{atts\_offset} \times \sigma_{\text{att}}, \quad \text{atts\_offset} \sim \text{Normal}(0, 1)$$
+
+    $$\text{defs\_raw} = \text{defs\_offset} \times \sigma_{\text{def}}, \quad \text{defs\_offset} \sim \text{Normal}(0, 1)$$
+
+    * **$\sigma_{\text{att}}$ & $\sigma_{\text{def}}$:** Global hyper-priors (drawn from an Exponential distribution) that learn how widely team quality varies across the entire world.
+    * **Standard Offsets:** The sampler samples from standard normal distributions ($0, 1$) and scales them afterwards, keeping the mathematical space smooth and collision-free.
+
+    ---
+
+    ### 3. The Expected Goals Equation ($\theta$)
+    When **Home Team $H$** plays **Away Team $A$**, their traits are pitted directly against each other to calculate their expected average scoring rates ($\theta_H$ and $\theta_A$). 
+
+    Because expected goal rates must always be positive, the parameters are combined inside a linear predictor and passed through an **exponential link function** ($\exp$):
+
+    $$\theta_H = \exp\left(\beta_0 + (\gamma \cdot \text{neutral\_mask}) + \text{att}_H - \text{def}_A\right)$$
+
+    $$\theta_A = \exp\left(\beta_0 + \text{att}_A - \text{def}_H\right)$$
+
+    #### Breakdown of Equation Components:
+    * **$\beta_0$ (`intercept`):** The global baseline goal-scoring rate for a neutral match between two average sides.
+    * **$\gamma$ (`home_adv`):** The goal boost gained from playing at home. This is multiplied by `neutral_mask` ($0$ for neutral World Cup venues, $1$ for true home matches).
+    * **$\text{att}_H - \text{def}_A$:** The direct matchup advantage. If Team H's attack is stronger than Team A's defense, this term is positive and increases Team H's expected goals.
+
+    > 💡 **In Plain Terms:** Expected goals ($\theta$) represent the theoretical average scoreline if two teams played each other hundreds of times (e.g., England expected goals $\theta_H = 1.82$, Scotland expected goals $\theta_A = 0.65$). 
+    > 
+    > Notice that $\theta$ is a continuous decimal—it does not tell us the probability of exact scorelines like $2\text{--}0$ or $1\text{--}1$ yet. To convert this expected average into discrete integer goals, we pass $\theta$ into a goal probability distribution in the next step.
+    """)
 
 # ---------------------------------------------------------
 # 3. INTERACTIVE MATCH SIMULATION
