@@ -324,7 +324,7 @@ with st.expander(
 # ---------------------------------------------------------
 # PENALTY SHOOTOUT ENGINE SECTION
 # ---------------------------------------------------------
-with st.expander("Penalty Shootout Engine", expanded=False):
+with st.expander("6. Penalty Shootout Engine", expanded=False):
     st.markdown(r"""
     Knockout matches that end in a draw cannot remain tied. While many traditional simulators treat penalty shootouts as a naive $50/50$ coin toss, historical data demonstrates that certain national teams exhibit consistent shoot-out performance due to tactical culture, goalkeeping pedigree, and pressure management.
 
