@@ -89,41 +89,49 @@ To capture the randomness, I built a Bayesian Negative Binomial model trained on
 
 st.divider()
 
-st.header("📈 1. Teaching the AI Football History")
-st.markdown("""
-A friendly match against a low-ranked team three years ago shouldn't carry the same weight 
-as a high-stakes continental knockout match played last month. 
+# ---------------------------------------------------------
+# 3. MODEL METHODOLOGY (DEEP DIVE)
+# ---------------------------------------------------------
+st.header("How the Statistical Engine Works")
 
-To fix this, the data pipeline dynamically recalculates a **match weight** using an exponential time-decay function. 
-Recent matches matter exponentially more than older ones.
+st.markdown("""
+To simulate matches realistically, we built a **Hierarchical Bayesian Negative Binomial Model** trained on historical international match data. 
+
+Here is the step-by-step statistical pipeline that turns raw scorelines into tournament probabilities:
 """)
 
-with st.expander("🛠️ View the Time-Decay Math & Logic"):
+# ---------------------------------------------------------
+# DATA PREPROCESSING & WEIGHTING SECTION
+# ---------------------------------------------------------
+with st.expander("1. Data Preprocessing & Weighting", expanded=True):
     st.markdown(r"""
-    We apply a recency weight using an exponential half-life formula:
-    $$W_t = e^{-\lambda \cdot t}$$
-    Where $t$ is the days elapsed since the match, and $\lambda$ dictates how fast historical memory decays.
+    The raw historical match dataset was obtained from [Kaggle's International Football Results (1872–Present)](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017). 
+    
+    To ensure team strength estimates reflect modern squad quality rather than outdated tactical eras or retired generations of players, the dataset was filtered to matches played from **2018 onwards**. The data was reduced to key features: match date, home team, away team, home/away scores, tournament type, and neutral venue indicators. Numeric team IDs were created across all 284 international sides for efficient array indexing inside PyMC.
+
+    To prevent friendly results or minor tournaments from distorting team ratings, two distinct weighting multipliers were applied to every match:
+
+    #### 1. Tournament Stature Weighting ($W_{\text{tournament}}$)
+    High-stakes competitive ties (e.g., FIFA World Cup fixtures or continental championships like the UEFA Euro and Copa América) receive weights close to $1.0$. Conversely, friendlies and minor exhibition cups, where managers frequently experiment with secondary lineups, are weighted significantly lower (down to $0.30$). This ensures a $3\text{--}0$ victory in a World Cup tie provides far more influence during parameter estimation than a $3\text{--}0$ win in a friendly.
+
+    #### 2. Exponential Recency Weighting ($W_{\text{recency}}$)
+    Team form naturally evolves over time. To give recent performances greater weight without applying an arbitrary cutoff date, an **exponential time-decay function** was applied:
+
+    $$W_{\text{recency}} = \exp\left(-\frac{\Delta t}{730}\right)$$
+
+    Where $\Delta t$ represents the number of days elapsed between the match date and the most recent match in the dataset. A denominator of $730$ days ($2\text{ years}$) was chosen because national teams play relatively infrequently (roughly 10–12 matches per year). Dividing by 730 flattens the decay curve smoothly, preserving sufficient sample size while ensuring modern form dominates.
+
+    #### Combined Match Weight ($\bar{W}$)
+    Both weights are multiplied together and normalized relative to the maximum weight:
+
+    $$W_{\text{final}} = W_{\text{tournament}} \times W_{\text{recency}}$$
+
+    $$\bar{W} = \frac{W_{\text{final}}}{\max(W_{\text{final}})}$$
+
+    This normalized weight ($\bar{W}$) enters the PyMC likelihood function, prioritizing recent, high-stakes competitive matches during Bayesian parameter estimation.
     """)
 
-st.write("---")
 
-st.header("🎲 2. The Engine: Upgrading From Rigid Averages")
-st.markdown("""
-Most basic sports models use a standard **Poisson distribution** to predict goals. Poisson models assume a 
-team scores at a perfectly predictable, steady average rate. 
-
-But football is prone to high variance—wild 0-0 gridlocks or massive 6-1 blowouts. To capture this 'chaos factor,' 
-I upgraded the model to a **Negative Binomial distribution**. This introduces an overdispersion parameter 
-which allows the AI to respect real-world unpredictability.
-""")
-
-with st.expander("🧠 View the Hierarchical PyMC Model Architecture"):
-    st.markdown("""
-    The model estimates individual attacking and defensive parameters for each team using a non-centered parameterization 
-    to prevent geometric funnels during MCMC sampling.
-    """)
-
-st.write("---")
 
 # ---------------------------------------------------------
 # 3. INTERACTIVE MATCH SIMULATION
