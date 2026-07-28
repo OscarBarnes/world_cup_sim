@@ -655,7 +655,7 @@ def run_1000_tournaments(chaos_factor):
     return df_matrix, df_upsets, df_thrillers
 
 # --- TRIGGER BUTTON & DISPLAY ---
-if st.button("Run 1,000 Simulations"):
+if st.button("🚀 Run 1,000 Simulations"):
     with st.spinner("Simulating 1,000 full tournament brackets across parallel realities..."):
         df_matrix, df_upsets, df_thrillers = run_1000_tournaments(tourney_chaos)
         
