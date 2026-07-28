@@ -437,7 +437,7 @@ c1, c2 = st.columns(2)
 with c1:
     tourney_chaos = st.slider("Tournament Chaos Level (Overdispersion)", min_value=0.1, max_value=2.0, value=1.0, key="grand_chaos")
 with c2:
-    st.info("⚡ **Fixed Multiverse Scale:** Set to exactly **1,000 Full Tournaments** for statistically robust survival probabilities.")
+    st.info("**Fixed Multiverse Scale:** Set to exactly **1,000 Full Tournaments** for statistically robust survival probabilities.")
 
 def run_1000_tournaments(chaos_factor):
     num_sims = 1000
