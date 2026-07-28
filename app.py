@@ -506,7 +506,7 @@ def run_1000_tournaments(chaos_factor):
                         g_stats[tB]["pts"] += 1
                     
                     # Track thrillers (7+ total goals)
-                    if (gA + gB) >= 7 and len(thrillers) < 15:
+                    if (gA + gB) >= 7:
                         thrillers.append({
                             "Universe": f"#{sim_id}",
                             "Stage": "Group Stage",
@@ -550,7 +550,7 @@ def run_1000_tournaments(chaos_factor):
             gB = np.random.negative_binomial(aB, aB / (aB + mu_B))
             
             # Thriller check for knockouts
-            if (gA + gB) >= 6 and len(thrillers) < 15:
+            if (gA + gB) >= 6:
                 thrillers.append({
                     "Universe": f"#{sim_id}",
                     "Stage": stage_name,
@@ -567,7 +567,7 @@ def run_1000_tournaments(chaos_factor):
             
             # Upset check (if underdog rating is significantly lower but wins)
             rating_gap = power_ratings[loser] - power_ratings[winner]
-            if rating_gap > 0.45 and len(upsets) < 15:
+            if rating_gap > 0.45:
                 upsets.append({
                     "Universe": f"#{sim_id}",
                     "Stage": stage_name,
@@ -649,8 +649,20 @@ def run_1000_tournaments(chaos_factor):
         })
         
     df_matrix = pd.DataFrame(matrix_records).sort_values(by="Champion %", ascending=False)
-    df_upsets = pd.DataFrame(upsets)
-    df_thrillers = pd.DataFrame(thrillers).sort_values(by="Total Goals", ascending=False) if thrillers else pd.DataFrame()
+    
+    # Process Upsets (take top 10 by biggest rating gap)
+    if upsets:
+        df_upsets = pd.DataFrame(upsets).sort_values(by="Rating Gap", ascending=False).head(10).reset_index(drop=True)
+    else:
+        df_upsets = pd.DataFrame()
+        
+    # Process Thrillers (take top 10 by highest total goals)
+    if thrillers:
+        df_thrillers = pd.DataFrame(thrillers).sort_values(by="Total Goals", ascending=False).head(10).reset_index(drop=True)
+    else:
+        df_thrillers = pd.DataFrame()
+    
+    return df_matrix, df_upsets, df_thrillers
     
     return df_matrix, df_upsets, df_thrillers
 
@@ -680,7 +692,7 @@ if st.button("🚀 Run 1,000 Simulations"):
     # 2. DRAMATIC UPSETS LOG DISPLAY
     st.write("---")
     st.subheader("2. Simulated Shockers")
-    st.markdown("Notable instances where a lower-ranked team defeated an elite favorite in a knockout tie:")
+    st.markdown("Notable instances where a lower-ranked team drew to or defeated an elite favorite in a knockout tie:")
     if not df_upsets.empty:
         st.dataframe(df_upsets, use_container_width=True)
     else:
