@@ -274,6 +274,32 @@ with st.expander(
     """)
 
 # ---------------------------------------------------------
+# TOURNAMENT SIMULATION ENGINE
+# ---------------------------------------------------------
+with st.expander(
+    "4. Tournament Monte Carlo Simulation", expanded=False
+):
+    st.markdown(r"""
+    With team traits estimated and goal distributions established, the final step is linking individual match predictions into a full **2026 FIFA World Cup Tournament Engine**.
+
+    #### 1. Sampling Posterior Parameters
+    Rather than assuming fixed, static team ratings, every single tournament run draws a fresh parameter combination from our MCMC posterior trace (`nb_trace.nc`). 
+
+    This ensures that Universe #1 might feature a slightly underperforming favorite, while Universe #42 features a peak underdog run—fully preserving Bayesian uncertainty across all fixtures.
+
+    #### 2. Executing the Official 2026 FIFA Structure (104 Matches)
+    Each tournament run simulates the complete 48-team World Cup structure step-by-step:
+
+    * **Group Stage (72 Matches):** Teams in Groups A through L play a 3-match round-robin. Standings are ranked by **Points $\rightarrow$ Goal Difference $\rightarrow$ Goals Scored**.
+    * **Wildcard Qualification:** The **12 group winners**, **12 runners-up**, and the **top 8 third-place teams** advance to the Round of 32.
+    * **Knockout Bracket (32 Matches):** Teams follow the official FIFA knockout path. Any match ending in a draw is resolved via simulated penalty shootouts.
+
+    #### 3. Simulating 1,000 Parallel Universes
+    By repeating this process **1,000 times**, we create 1,000 parallel World Cup realities. Aggregating the outcomes across all runs converts unpredictable single-match chaos into reliable, probabilistic forecasts for every country's chances of lifting the trophy.
+    """)
+
+
+# ---------------------------------------------------------
 # 3. INTERACTIVE MATCH SIMULATION
 # ---------------------------------------------------------
 def simulate_match(team_a, team_b, trace, chaos_factor, master_list):
