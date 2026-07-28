@@ -274,7 +274,7 @@ with st.expander(
     """)
 
 # ---------------------------------------------------------
-# NEW: MODEL CONVERGENCE & DIAGNOSTICS
+# MODEL CONVERGENCE & DIAGNOSTICS
 # ---------------------------------------------------------
 with st.expander("4. Model Convergence & Diagnostic Validation", expanded=False):
     st.markdown(r"""
@@ -321,6 +321,8 @@ with st.expander(
     By repeating this process **1,000 times**, we create 1,000 parallel World Cup realities. Aggregating the outcomes across all runs converts unpredictable single-match chaos into reliable, probabilistic forecasts for every country's chances of lifting the trophy.
     """)
 
+st.divider()
+
 # ---------------------------------------------------------
 # 4. INTERACTIVE MATCH SIMULATION
 # ---------------------------------------------------------
@@ -363,7 +365,7 @@ def simulate_match(team_a, team_b, trace, chaos_factor, master_list):
 # ---------------------------------------------------------
 # MATCH SIMULATOR SECTION
 # ---------------------------------------------------------
-st.header("Test the Match Simulation!")
+st.header("Test the Match Simulation")
 
 st.markdown(r"""
 Before simulating the entire 2026 World Cup tournament, use this single-match sandbox to test how two nations match up head-to-head across **1,000 parallel match realities**.
@@ -374,7 +376,7 @@ The **Chaos Level** slider directly controls the **overdispersion parameter ($\a
 * **High Chaos ($\text{Smaller } \alpha$):** Increases match variance. This simulates high-entropy tournament conditions where red cards, early goals, and tactical collapses lead to shock upsets, high-scoring thrillers, or $0\text{--}0$ stalemates.
 * **Low Chaos ($\text{Larger } \alpha$):** Suppresses match variance toward standard Poisson behavior ($\text{Variance} \approx \text{Mean}$). Games play out strictly according to baseline team quality, making favorites significantly more dominant.
 
-Select your teams, adjust the overdispersion, and launch the multiverse simulation below!
+Select your teams, adjust the overdispersion, and launch the simulation below!
 """)
 
 col1, col2 = st.columns(2)
