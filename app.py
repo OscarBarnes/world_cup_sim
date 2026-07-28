@@ -416,16 +416,19 @@ if st.button("🚀 Run Match Simulation"):
 st.write("---")
 
 # ---------------------------------------------------------
-# 5. THE GRAND TOURNAMENT SIMULATION & MULTIVERSE LOGS
+# GRAND TOURNAMENT ENGINE SECTION
 # ---------------------------------------------------------
 st.header("The Grand Tournament Engine")
 
-st.markdown("""
-Welcome to the main event. While single-match predictions are useful, tournament football introduces cumulative fatigue, 
-bracket pathways, and knockout chaos. 
+st.markdown(r"""
+Scaling up from single-match predictions, this engine simulates **1,000 complete 2026 World Cup tournaments** (104,000 total matches) across the official 48-team structure. 
 
-Below, the engine simulates **1,000 complete 2026 World Cup tournaments** (104,000 total matches). It maps each team's 
-path through the 12-group phase, the 32-team knockout bracket, and tracks the most dramatic realities in the multiverse.
+#### 📖 How to Interpret the Output:
+* **1. The World Cup Survival Matrix:** Displays each nation's statistical probability (%) of reaching each progressive milestone—from surviving the group stage (Round of 32) all the way to lifting the trophy.
+* **2. Multiverse Shockers:** Highlights notable "giant-killing" upsets where lower-ranked underdogs knocked out elite powerhouses in elimination ties across the simulated realities.
+* **3. High-Scoring Thrillers:** Showcases extreme, high-entropy "tail events"—the wildest, highest-scoring goal-fests recorded across all 100,000+ matches.
+
+Adjust the chaos level below and launch the 1,000-universe simulation!
 """)
 
 # Setup simulation parameters
