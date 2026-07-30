@@ -809,25 +809,25 @@ st.write("---")
 st.header("Project Source Code & Reproducibility")
 
 st.markdown("""
-Transparency and statistical reproducibility are central to this project. All data preprocessing pipelines, Bayesian model specifications, MCMC diagnostic checks, and tournament simulation scripts are open-source and publicly hosted on GitHub.
+All data preprocessing pipelines, Bayesian model specifications, MCMC diagnostic checks, and tournament simulation scripts are open-source and publicly hosted on GitHub.
 """)
 
 # Callout box for GitHub access
 st.info("### View Source Code on GitHub")
 st.markdown("""
-You can inspect the full codebase—including the complete `model_training.ipynb` notebook, raw CSV datasets, MCMC trace file, and Streamlit application scripts—directly on GitHub:
+You can inspect the full codebase, including the complete `WCPred.ipynb` notebook, raw CSV datasets, MCMC trace file, and Streamlit application scripts, directly on GitHub:
 
-[![GitHub Repo](https://img.shields.io/badge/GitHub-View_Repository-181717?style=for-the-badge&logo=github)](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-View_Repository-181717?style=for-the-badge&logo=github)](https://github.com/OscarBarnes/world_cup_sim)
 """)
 
 # Expander detailing what is inside the notebook
-with st.expander("🔍 What is inside the `model_training.ipynb` notebook?"):
-    st.markdown("""
+with st.expander("🔍 What is inside the `WCPred.ipynb` notebook?"):
+    st.markdown(r"""
     The Jupyter Notebook provides a step-by-step walk-through of the entire analytical pipeline:
     
     * **1. Data Preprocessing & Weighting:** Filtering post-2018 international fixtures and computing dynamic tournament stature and exponential recency weights ($\Delta t / 730$).
     * **2. Hierarchical Model Construction:** Defining non-centered latent team attack ($\text{att}_i$) and defense ($\text{def}_i$) parameters, sum-to-zero constraints, global intercept ($\beta_0$), and Negative Binomial overdispersion ($\alpha$) in PyMC.
-    * **3. MCMC Sampling & NetCDF Export:** Running Hamiltonian Monte Carlo (NUTS) sampling across multiple chains and exporting the posterior trace (`nb_trace.nc`).
-    * **4. Diagnostic Validation:** Checking convergence via Gelman-Rubin ($\hat{R} = 1.00$), Effective Sample Size (ESS), zero divergent transitions check, and posterior predictive checks.
+    * **3. MCMC Sampling & NetCDF Export:** Running Monte Carlo sampling across multiple chains and exporting the posterior trace (`nb_trace.nc`).
+    * **4. Diagnostic Validation:** Checking convergence via Gelman-Rubin ($\hat{R} = 1.00$), Effective Sample Size (ESS), and posterior predictive checks.
     * **5. Laplace Penalty Smoothing:** Calculating empirical shootout probabilities using historical penalty data smoothed with prior weight $\alpha = 4$.
     """)
